@@ -6,4 +6,9 @@ export class Enemy {
     this.damage = damage;
     this.img = img;
   }
+
+  takeDamage(amount) {
+    this.hp -= amount;
+    if (this.hp < 0) this.hp = 0;
+  }
 }
