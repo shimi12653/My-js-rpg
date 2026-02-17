@@ -17,5 +17,9 @@
   "bugs": {
     "url": "https://github.com/shimi12653/My-js-rpg/issues"
   },
-  "homepage": "https://github.com/shimi12653/My-js-rpg#readme"
+  "homepage": "https://github.com/shimi12653/My-js-rpg#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  }
 }
