@@ -1,9 +1,13 @@
 import express from "express";
+import cors from "cors";
 import { Game } from "./Game.js"; // 1. Импортируем нашу игру
 import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с null
 
 const app = express();
 const PORT = 3000;
+
+// Подключение CORS (возможность серверу брать информацию из другого источника. Источник как сервер, так и пк может быть)
+app.use(cors());
 
 // Создаем игру один раз при запуске сервера
 const myGame = new Game();
