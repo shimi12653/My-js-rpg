@@ -1,0 +1,21 @@
+{
+  "name": "js-basics",
+  "version": "1.0.0",
+  "description": "",
+  "main": "api.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shimi12653/My-js-rpg.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/shimi12653/My-js-rpg/issues"
+  },
+  "homepage": "https://github.com/shimi12653/My-js-rpg#readme"
+}

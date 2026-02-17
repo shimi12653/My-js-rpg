@@ -109,7 +109,7 @@ const renderInventory = () => {
         if (game.currentEnemy.hp > SETTINGS.BOMB_DAMAGE) {
           game.currentEnemy.hp -= SETTINGS.BOMB_DAMAGE;
 
-          logMessage(`BOOM! ${SETTINGS.BOMB_DAMAGE} enemy hp`, "red");
+          logMessage(`BOOM! -${SETTINGS.BOMB_DAMAGE} enemy hp`, "red");
 
           game.isProccessingTurn = true;
           toggleControls(true);
@@ -128,6 +128,7 @@ const renderInventory = () => {
                 myBtn.style.color = "#BBB";
               }
             } else {
+              toggleControls(false);
               myBtn.disabled = true;
               buyBtn.disabled = true;
             }

@@ -18,6 +18,7 @@ export class Game {
     this.level = 1;
     this.hero = new Hero();
 
+    this.inventory = [];
     this.inventory.push(ITEMS.POTION, ITEMS.BOMB, ITEMS.GOLD, ITEMS.DAGGER);
 
     this.state = GAME_STATE.PLAYING;
