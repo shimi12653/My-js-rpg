@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSBasics</title>
+  </head>
+  <body>
+    <div
+      id="loading-screen"
+      style="
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100px;
+        font-family: monospace;
+        font-size: 2rem;
+      "
+    >
+      Loading resources. Please wait...
+    </div>
+    <div id="game-app" style="display: none">
+      <h1>RPG Game (Level: <span id="game-level">1</span>)</h1>
+      <div class="hero-stats">
+        <h2>Hero HP: <span id="hero-hp">100</span></h2>
+      </div>
+      <h2>Enemy HP: <span id="enemy-hp">100</span></h2>
+      <p id="log">Battle started...</p>
+      <!-- 
+    Ого, прикольные комменты. Делаются на ctrl + /
+    Короче, это полоска хп врага. Просто знай
+    -->
+      <div
+        style="
+          border: 2px solid black;
+          width: 200px;
+          height: 30px;
+          background-color: #ddd;
+        "
+      >
+        <div
+          id="hero-hp-bar"
+          style="
+            width: 100%;
+            height: 100%;
+            background-color: red;
+            transition: width 0.3s;
+          "
+        ></div>
+      </div>
+
+      <div
+        style="
+          border: 2px solid black;
+          width: 200px;
+          height: 30px;
+          background-color: #ddd;
+        "
+      >
+        <div
+          id="hp-bar"
+          style="
+            width: 100%;
+            height: 100%;
+            background-color: limegreen;
+            transition: width 0.3s;
+          "
+        ></div>
+      </div>
+
+      <h3>Inventory:</h3>
+      <ul id="inventory-list"></ul>
+
+      <img
+        id="enemy-img"
+        src=""
+        alt="Enemy"
+        style="
+          width: 200px;
+          height: 200px;
+          object-fit: cover;
+          border: 2px solid black;
+        "
+      />
+
+      <label>Choose your enemy:</label>
+      <select id="enemy-select">
+        <option value="0">Goblin (Easy)</option>
+        <option value="1">Orc (Medium)</option>
+        <option value="2">Dragon (Hard)</option>
+      </select>
+
+      <button id="attack-btn">ATTACK!</button>
+      <button id="restart-btn">Play Again</button>
+      <button id="reset-btn">Reset Stats</button>
+      <button id="buy-bomb-btn">Buy bomb (100 g)</button>
+      <script type="module" src="script.js"></script>
+    </div>
+  </body>
+</html>
