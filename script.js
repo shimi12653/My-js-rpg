@@ -109,6 +109,19 @@ const renderInventory = () => {
         if (game.currentEnemy.hp > SETTINGS.BOMB_DAMAGE) {
           game.currentEnemy.hp -= SETTINGS.BOMB_DAMAGE;
 
+          fetch("http://localhost:3000/bomb")
+            .then((response) => response.json())
+            .then((data) =>
+              logMessage(
+                `Server: ${data.message} (Enemy HP: ${data.enemyHpLeft})`,
+                "purple",
+                "bold",
+              ),
+            )
+            .catch((error) =>
+              console.error("Bomb error on the server: ", error),
+            );
+
           logMessage(`BOOM! -${SETTINGS.BOMB_DAMAGE} enemy hp`, "red");
 
           game.isProccessingTurn = true;
@@ -137,6 +150,19 @@ const renderInventory = () => {
         } else if (game.currentEnemy.hp === 0) {
           logMessage("You used a bomb, but enemy is already dead.", "red");
         } else {
+          fetch("http://localhost:3000/bomb")
+            .then((response) => response.json())
+            .then((data) =>
+              logMessage(
+                `Server: ${data.message} (Enemy HP: ${data.enemyHpLeft})`,
+                "purple",
+                "bold",
+              ),
+            )
+            .catch((error) =>
+              console.error("Bomb error on the server: ", error),
+            );
+
           handleVictory();
 
           logMessage("BOOM! Fatal damage!", "black");

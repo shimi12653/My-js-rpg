@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
   );
 });
 
-// 🔥 МАГИЯ: Сервер отдает состояние игры
+// Сервер отдает состояние игры
 app.get("/game-status", (req, res) => {
   // Мы берем данные из JS-объекта и отправляем их как JSON (текст)
   res.json({
@@ -33,7 +33,6 @@ app.get("/game-status", (req, res) => {
   });
 });
 
-// 🔥 МАГИЯ 2: Удар по ссылке!
 app.get("/hit", (req, res) => {
   const damageFromClient = parseInt(req.query.damage) || 0;
   // 1. Бьем врага
@@ -43,6 +42,18 @@ app.get("/hit", (req, res) => {
   res.json({
     message: "Ты ударил врага!",
     damageDealt: damageFromClient,
+    enemyHpLeft: myGame.currentEnemy.hp,
+  });
+});
+
+app.get("/bomb", (req, res) => {
+  const bombDamage = 50;
+
+  myGame.currentEnemy.takeDamage(bombDamage);
+
+  res.json({
+    message: "BOOM! Server read explosion!",
+    damageDealt: bombDamage,
     enemyHpLeft: myGame.currentEnemy.hp,
   });
 });
