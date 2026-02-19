@@ -35,14 +35,29 @@ app.get("/game-status", (req, res) => {
 
 // 🔥 МАГИЯ 2: Удар по ссылке!
 app.get("/hit", (req, res) => {
+  const damageFromClient = parseInt(req.query.damage) || 0;
   // 1. Бьем врага
-  myGame.currentEnemy.takeDamage(myGame.hero.damage);
+  myGame.currentEnemy.takeDamage(damageFromClient);
 
   // 2. Отвечаем клиенту, что случилось
   res.json({
     message: "Ты ударил врага!",
-    damageDealt: myGame.hero.damage,
+    damageDealt: damageFromClient,
     enemyHpLeft: myGame.currentEnemy.hp,
+  });
+});
+
+app.get("/sync", (req, res) => {
+  const syncEnemyHp = parseInt(req.query.hp) || 100;
+  const syncEnemyName = req.query.name || "Unknown";
+
+  myGame.currentEnemy.hp = syncEnemyHp;
+  myGame.currentEnemy.maxHp = syncEnemyHp;
+  myGame.currentEnemy.name = syncEnemyName;
+
+  res.json({
+    message: "Server synchronized. New enemy ready to fight.",
+    enemyStatus: myGame.currentEnemy,
   });
 });
 

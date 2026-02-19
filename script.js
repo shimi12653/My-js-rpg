@@ -302,6 +302,13 @@ const initGame = () => {
 
   game.currentEnemy.hp = Math.floor(game.currentEnemy.maxHp * game.level);
 
+  fetch(
+    `http://localhost:3000/sync?name=${game.currentEnemy.name}&hp=${game.currentEnemy.hp}`,
+  )
+    .then((response) => response.json())
+    .then((data) => console.log("Synchronization: ", data.message))
+    .catch((e) => console.error("Sync failed: ", e));
+
   toggleControls(false);
 
   mySpan.innerText = game.currentEnemy.hp;
@@ -352,11 +359,27 @@ const toggleControls = (isDisabled) => {
   myRestart.style.color = isDisabled ? "#BBB" : "";
 };
 
-myBtn.addEventListener("click", () => {
+myBtn.addEventListener("click", async () => {
   if (game.isProccessingTurn) return;
 
   const rawDamage = calculateWeaponDamage(game.hero.damage);
   const finalDamage = applyCrit(rawDamage);
+
+  try {
+    const response = await fetch(
+      `http://localhost:3000/hit?damage=${finalDamage}`,
+    );
+    const data = await response.json();
+
+    logMessage(
+      `Server: ${data.message} (Damage: ${data.damageDealt}, Enemy HP: ${data.enemyHpLeft})`,
+      "purple",
+      "bold",
+    );
+  } catch (e) {
+    console.error(e);
+    logMessage("Server unavailable. Play offline.", "red");
+  }
 
   game.currentEnemy.hp -= finalDamage;
 
