@@ -11,7 +11,23 @@ app.use(cors());
 
 // Создаем игру один раз при запуске сервера
 const myGame = new Game();
-// Важный фикс для консольной версии (как мы делали раньше)
+
+const calculateWeaponDamage = (base) => {
+  const variance = 0.2;
+  const min = Math.ceil(base * (1 - variance));
+  const max = Math.floor(base * (1 + variance));
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+const applyCrit = (damage) => {
+  const CRIT_CHANCE = 0.3;
+  if (Math.random() < CRIT_CHANCE) {
+    return damage * 2.0;
+  }
+  return damage;
+};
+
+// Для консоли прописал стокового врага
 myGame.currentEnemy = new Enemy("Server Goblin", 100, 10);
 
 // Главная страница
@@ -33,15 +49,38 @@ app.get("/game-status", (req, res) => {
   });
 });
 
-app.get("/hit", (req, res) => {
-  const damageFromClient = parseInt(req.query.damage) || 0;
-  // 1. Бьем врага
-  myGame.currentEnemy.takeDamage(damageFromClient);
+app.get("/enemy-attack", (req, res) => {
+  const currentLevel = parseInt(req.query.level) || 1;
 
-  // 2. Отвечаем клиенту, что случилось
+  const ENEMY_LEVEL_MULTI = 0.2;
+
+  const levelMultiplier = 1 + currentLevel * ENEMY_LEVEL_MULTI;
+  const scaledDamage = Math.floor(myGame.currentEnemy.damage * levelMultiplier);
+
+  myGame.hero.takeDamage(scaledDamage);
+
   res.json({
-    message: "Ты ударил врага!",
-    damageDealt: damageFromClient,
+    message: "Враг нанес ответный удар!",
+    damageDealt: scaledDamage,
+    heroHpLeft: myGame.hero.hp,
+    critLevel: levelMultiplier.toFixed(1),
+  });
+});
+
+app.get("/hit", (req, res) => {
+  const heroBaseDamage = myGame.hero.damage;
+
+  const rawDamage = calculateWeaponDamage(heroBaseDamage);
+  const finalDamage = applyCrit(rawDamage);
+
+  const isCrit = finalDamage > rawDamage;
+
+  myGame.currentEnemy.takeDamage(finalDamage);
+
+  res.json({
+    message: isCrit ? "Critical Hit!" : "Regular Hit!",
+    damageDealt: finalDamage,
+    isCrit: isCrit,
     enemyHpLeft: myGame.currentEnemy.hp,
   });
 });
@@ -55,6 +94,40 @@ app.get("/bomb", (req, res) => {
     message: "BOOM! Server read explosion!",
     damageDealt: bombDamage,
     enemyHpLeft: myGame.currentEnemy.hp,
+  });
+});
+
+app.get("/heal-hero", (req, res) => {
+  myGame.hero.hp = myGame.hero.maxHp;
+
+  res.json({
+    message: "Hero was healed on server.",
+    heroHp: myGame.hero.hp,
+  });
+});
+
+app.get("/reset-hero", (req, res) => {
+  myGame.hero.hp = 100;
+  myGame.hero.maxHp = 100;
+  myGame.hero.damage = 10;
+
+  res.json({
+    message: "Hero stats was successfully reset to default.",
+  });
+});
+
+app.get("/level-up", (req, res) => {
+  const newMaxHp = parseInt(req.query.maxHp);
+  const newHp = parseInt(req.query.hp);
+  const newDamage = parseInt(req.query.damage);
+
+  if (newMaxHp) myGame.hero.maxHp = newMaxHp;
+  if (newHp) myGame.hero.hp = newHp;
+  if (newDamage) myGame.hero.damage = newDamage;
+
+  res.json({
+    message: "Hero leveled up. Server wrote it.",
+    heroStats: myGame.hero,
   });
 });
 

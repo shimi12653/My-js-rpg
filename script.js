@@ -249,6 +249,13 @@ const handleVictory = () => {
   game.hero.hp += SETTINGS.LEVEL_UP_HP;
   game.hero.damage += SETTINGS.LEVEL_UP_DAMAGE;
 
+  fetch(
+    `http://localhost:3000/level-up?maxHp=${game.hero.maxHp}&hp=${game.hero.hp}&damage=${game.hero.damage}`,
+  )
+    .then((response) => response.json())
+    .then((data) => console.log("Server sync: ", data.message))
+    .catch((e) => console.error("Level up sync failed: ", e));
+
   updateHeroUI();
 
   logMessage(`Level up! Current level: ${game.level}`, "black");
@@ -265,50 +272,45 @@ const handleVictory = () => {
   saveGame();
 };
 
-const enemyAttack = () => {
+const enemyAttack = async () => {
   // Увеличение урона врага на 20% за 1 лвл
-  const levelMultiplier = 1 + game.level * SETTINGS.ENEMY_LEVEL_MULTI;
+  try {
+    const response = await fetch(
+      `http://localhost:3000/enemy-attack?level=${game.level}`,
+    );
+    const data = await response.json();
 
-  const scaledDamage = Math.floor(game.currentEnemy.damage * levelMultiplier);
+    game.hero.hp = data.heroHpLeft;
+    updateHeroUI();
 
-  game.hero.takeDamage(scaledDamage);
-  updateHeroUI();
+    logMessage(
+      `Enemy hits you for ${data.damageDealt} damage! (Crit level: ${data.critLevel}x)`,
+      "red",
+    );
 
-  heroHp.innerText = game.hero.hp;
-  logMessage(
-    `Enemy hits you for ${scaledDamage} damage! (Crit level: ${levelMultiplier.toFixed(1)}x)`,
-    "red",
-  );
+    if (game.hero.hp <= 0) {
+      game.hero.hp = 0;
+      game.state = GAME_STATE.GAME_OVER;
 
-  if (game.hero.hp <= 0) {
-    game.hero.hp = 0;
-    game.state = GAME_STATE.GAME_OVER;
-
-    myBtn.disabled = true;
-    myBtn.style.color = "#BBB";
-    logMessage("You died... Game over.", "red", "bold");
-    clearInterval(regenTimer);
+      myBtn.disabled = true;
+      myBtn.style.color = "#BBB";
+      logMessage("You died... Game over.", "red", "bold");
+      clearInterval(regenTimer);
+    }
+  } catch (e) {
+    console.error("Server unavailable. Enemy missed.", "red");
   }
-};
-
-const calculateWeaponDamage = (base) => {
-  const variance = 0.2;
-  const min = Math.ceil(base * (1 - variance));
-  const max = Math.floor(base * (1 + variance));
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-const applyCrit = (damage) => {
-  if (Math.random() < SETTINGS.CRIT_CHANCE) {
-    return damage * 2.0;
-  }
-  return damage;
 };
 
 const resetProgress = () => {
   game.reset();
 
   lvlIndicator.innerText = game.level;
+
+  fetch("http://localhost:3000/reset-hero")
+    .then((response) => response.json())
+    .then((data) => console.log("Server status: ", data.message))
+    .catch((e) => console.error("Failed to reset on server.", e));
 
   saveGame();
   initGame();
@@ -322,6 +324,10 @@ const initGame = () => {
   // Если у героя хп 0 или меньше - хилим полностью
   if (game.hero.hp <= 0) {
     game.hero.hp = game.hero.maxHp;
+
+    fetch("http://localhost:3000/heal-hero").catch((e) =>
+      console.error("Failed to heal a hero on server. Reason: ", e),
+    );
   }
 
   updateHeroUI();
@@ -388,13 +394,8 @@ const toggleControls = (isDisabled) => {
 myBtn.addEventListener("click", async () => {
   if (game.isProccessingTurn) return;
 
-  const rawDamage = calculateWeaponDamage(game.hero.damage);
-  const finalDamage = applyCrit(rawDamage);
-
   try {
-    const response = await fetch(
-      `http://localhost:3000/hit?damage=${finalDamage}`,
-    );
+    const response = await fetch(`http://localhost:3000/hit`);
     const data = await response.json();
 
     logMessage(
@@ -402,61 +403,58 @@ myBtn.addEventListener("click", async () => {
       "purple",
       "bold",
     );
+
+    game.currentEnemy.hp = data.enemyHpLeft;
+
+    const isCrit = data.isCrit;
+
+    if (game.currentEnemy.hp <= 0) {
+      handleVictory();
+    } else {
+      mySpan.innerText = game.currentEnemy.hp;
+      logMessage(
+        `You hit the enemy! Your damage: ${data.damageDealt}`,
+        isCrit ? "red" : "black",
+        isCrit ? "bold" : "normal",
+      );
+
+      const percNewEnemyHp =
+        (game.currentEnemy.hp / (game.currentEnemy.maxHp * game.level)) * 100;
+      myHpBar.style.width = `${percNewEnemyHp}%`;
+
+      game.isProccessingTurn = true;
+      toggleControls(true);
+
+      logMessage("Enemy is preparing to attack. Defend yourself!", "grey");
+
+      setTimeout(async () => {
+        await enemyAttack();
+
+        game.isProccessingTurn = false;
+
+        if (
+          game.state === GAME_STATE.PLAYING ||
+          game.state === GAME_STATE.VICTORY
+        ) {
+          toggleControls(false);
+
+          if (game.state === GAME_STATE.VICTORY) {
+            myBtn.disabled = true;
+            myBtn.style.color = "#BBB";
+          }
+        } else {
+          toggleControls(false);
+
+          myBtn.disabled = true;
+          buyBtn.disabled = true;
+        }
+
+        saveGame();
+      }, SETTINGS.ENEMY_TURN_DELAY);
+    }
   } catch (e) {
     console.error(e);
     logMessage("Server unavailable. Play offline.", "red");
-  }
-
-  game.currentEnemy.hp -= finalDamage;
-
-  let isCrit = false;
-  if (finalDamage > rawDamage) {
-    isCrit = true;
-  }
-
-  if (game.currentEnemy.hp <= 0) {
-    handleVictory();
-  } else {
-    mySpan.innerText = game.currentEnemy.hp;
-    logMessage(
-      `You hit the enemy! Your damage: ${finalDamage}`,
-      isCrit ? "red" : "black",
-      isCrit ? "bold" : "normal",
-    );
-
-    const percNewEnemyHp =
-      (game.currentEnemy.hp / (game.currentEnemy.maxHp * game.level)) * 100;
-    myHpBar.style.width = `${percNewEnemyHp}%`;
-
-    game.isProccessingTurn = true;
-    toggleControls(true);
-
-    logMessage("Enemy is preparing to attack. Defend yourself!", "grey");
-
-    setTimeout(() => {
-      enemyAttack();
-
-      game.isProccessingTurn = false;
-
-      if (
-        game.state === GAME_STATE.PLAYING ||
-        game.state === GAME_STATE.VICTORY
-      ) {
-        toggleControls(false);
-
-        if (game.state === GAME_STATE.VICTORY) {
-          myBtn.disabled = true;
-          myBtn.style.color = "#BBB";
-        }
-      } else {
-        toggleControls(false);
-
-        myBtn.disabled = true;
-        buyBtn.disabled = true;
-      }
-
-      saveGame();
-    }, SETTINGS.ENEMY_TURN_DELAY);
   }
 });
 
