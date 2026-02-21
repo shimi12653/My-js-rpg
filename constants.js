@@ -25,7 +25,7 @@ export const SETTINGS = {
   ENEMY_TURN_DELAY: 1000,
 
   // items
-  GOLD_DROP: 100, // Имеется ввиду сколько золото с лута приносит
+  GOLD_DROP: 50, // Имеется ввиду сколько золото с лута приносит
   BOMB_COST: 100,
   STARTING_GOLD: 0,
 

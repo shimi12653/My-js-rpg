@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { Game } from "./Game.js"; // 1. Импортируем нашу игру
 import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с null
+import { ITEMS, SETTINGS } from "./constants.js";
 
 const app = express();
 const PORT = 3000;
@@ -52,6 +53,33 @@ app.get("/game-status", (req, res) => {
   });
 });
 
+// drop system
+app.get("/generate-loot", (req, res) => {
+  let droppedItem = null;
+  let message = "No loot found.";
+
+  if (Math.random() < 0.5) {
+    const possibleLoot = [ITEMS.POTION, ITEMS.DAGGER, ITEMS.GOLD];
+    droppedItem = possibleLoot[Math.floor(Math.random() * possibleLoot.length)];
+
+    if (droppedItem === ITEMS.GOLD) {
+      myGame.hero.gold += SETTINGS.GOLD_DROP;
+      message = `You found a ${ITEMS.GOLD} from enemy. You got ${SETTINGS.GOLD_DROP} gold!`;
+    } else {
+      myGame.inventory.push(droppedItem);
+      message = `You found ${droppedItem} from enemy. Congratulations!`;
+    }
+  }
+
+  res.json({
+    message: message,
+    loot: droppedItem,
+    inventory: myGame.inventory,
+    gold: myGame.hero.gold,
+  });
+});
+
+// attack method (enemy and hero)
 app.get("/enemy-attack", (req, res) => {
   const currentLevel = parseInt(req.query.level) || 1;
 
@@ -100,6 +128,7 @@ app.get("/bomb", (req, res) => {
   });
 });
 
+// hero stats operations (heal, reset and lvl up)
 app.get("/heal-hero", (req, res) => {
   myGame.hero.hp = myGame.hero.maxHp;
 
@@ -134,6 +163,7 @@ app.get("/level-up", (req, res) => {
   });
 });
 
+// synchronization fronted and backend (enemy and hero)
 app.get("/sync", (req, res) => {
   const syncEnemyHp = parseInt(req.query.hp) || 100;
   const syncEnemyName = req.query.name || "Unknown";
@@ -149,7 +179,6 @@ app.get("/sync", (req, res) => {
 });
 
 // load and save
-
 app.post("/save-game", (req, res) => {
   const savedLevel = req.body.level;
   const savedInventory = req.body.inventory;

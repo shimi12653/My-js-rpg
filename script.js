@@ -205,26 +205,25 @@ const renderInventory = () => {
 };
 
 // Функционал выпадения предметов
-const dropLoot = () => {
-  const yourLuck = Math.random();
+const dropLoot = async () => {
+  try {
+    const response = await fetch("http://localhost:3000/generate-loot");
+    const data = await response.json();
 
-  if (yourLuck < 0.5) {
-    const possibleLoot = [ITEMS.POTION, ITEMS.DAGGER, ITEMS.GOLD];
+    game.inventory.length = 0;
+    game.inventory.push(...data.inventory);
+    game.hero.gold = data.gold;
 
-    const loot = possibleLoot[Math.floor(Math.random() * possibleLoot.length)];
+    logMessage(`Server: ${data.message}`, "black");
 
-    game.inventory.push(loot);
-
-    logMessage(`Enemy dropped ${loot}. Congratulations!`, "black");
-  } else {
-    logMessage(`No loot found.`, "black");
+    renderInventory();
+  } catch (e) {
+    console.error("Loot generation failed: ", e);
   }
-
-  renderInventory();
 };
 
 // Функция победы (чтобы не писать это всё много раз снова и снова)
-const handleVictory = () => {
+const handleVictory = async () => {
   game.currentEnemy.hp = 0;
   mySpan.innerText = 0;
 
@@ -237,7 +236,7 @@ const handleVictory = () => {
 
   clearInterval(regenTimer);
 
-  dropLoot();
+  await dropLoot();
 
   game.state = GAME_STATE.VICTORY;
 
@@ -248,12 +247,15 @@ const handleVictory = () => {
   game.hero.hp += SETTINGS.LEVEL_UP_HP;
   game.hero.damage += SETTINGS.LEVEL_UP_DAMAGE;
 
-  fetch(
-    `http://localhost:3000/level-up?maxHp=${game.hero.maxHp}&hp=${game.hero.hp}&damage=${game.hero.damage}`,
-  )
-    .then((response) => response.json())
-    .then((data) => console.log("Server sync: ", data.message))
-    .catch((e) => console.error("Level up sync failed: ", e));
+  try {
+    const response = await fetch(
+      `http://localhost:3000/level-up?maxHp=${game.hero.maxHp}&hp=${game.hero.hp}&damage=${game.hero.damage}`,
+    );
+    const data = await response.json();
+    console.log("Server sync: ", data.message);
+  } catch (e) {
+    console.error("Level up sync failed: ", e);
+  }
 
   updateHeroUI();
 
