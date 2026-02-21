@@ -1,10 +1,10 @@
 {
-  "level": 3,
+  "level": 2,
   "inventory": [],
   "heroStats": {
-    "hp": 98,
-    "maxHp": 140,
-    "damage": 14,
-    "gold": 150
+    "hp": 102,
+    "maxHp": 120,
+    "damage": 12,
+    "gold": 200
   }
 }

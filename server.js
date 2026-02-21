@@ -196,10 +196,12 @@ app.get("/level-up", (req, res) => {
 app.get("/sync", (req, res) => {
   const syncEnemyHp = parseInt(req.query.hp) || 100;
   const syncEnemyName = req.query.name || "Unknown";
+  const syncEnemyDamage = parseInt(req.query.damage) || 10;
 
   myGame.currentEnemy.hp = syncEnemyHp;
   myGame.currentEnemy.maxHp = syncEnemyHp;
   myGame.currentEnemy.name = syncEnemyName;
+  myGame.currentEnemy.damage = syncEnemyDamage;
 
   res.json({
     message: "Server synchronized. New enemy ready to fight.",

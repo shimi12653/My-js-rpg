@@ -336,7 +336,7 @@ const initGame = () => {
   game.currentEnemy.hp = Math.floor(game.currentEnemy.maxHp * game.level);
 
   fetch(
-    `http://localhost:3000/sync?name=${game.currentEnemy.name}&hp=${game.currentEnemy.hp}`,
+    `http://localhost:3000/sync?name=${game.currentEnemy.name}&hp=${game.currentEnemy.hp}&damage=${game.currentEnemy.damage}`,
   )
     .then((response) => response.json())
     .then((data) => console.log("Synchronization: ", data.message))
