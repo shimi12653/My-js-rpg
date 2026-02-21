@@ -2,7 +2,6 @@
 
 import { Game } from "./Game.js";
 import { ITEMS, GAME_STATE } from "./constants.js";
-import { Hero } from "./Hero.js";
 import { fetchEnemies } from "./api.js";
 import { SETTINGS } from "./constants.js";
 
@@ -485,29 +484,43 @@ buyBtn.addEventListener("click", () => {
 
 // Сохранение игры на локальный диск
 const saveGame = () => {
-  const gameData = {
+  const payload = {
     level: game.level,
-    heroStats: game.hero,
-    bag: game.inventory,
+    inventory: game.inventory,
+    gold: game.hero.gold,
   };
 
-  localStorage.setItem("myRPG", JSON.stringify(gameData));
+  fetch("http://localhost:3000/save-game", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json", // Сервер понимает, что внутри джсон
+    },
+    body: JSON.stringify(payload),
+  })
+    .then((response) => response.json())
+    .then((data) => console.log("Server save: ", data.message))
+    .catch((e) => console.error("Failed to save to server.", e));
 };
 
-const loadGame = () => {
-  const dataString = localStorage.getItem("myRPG");
+const loadGame = async () => {
+  try {
+    const response = await fetch("http://localhost:3000/load-game");
+    const data = await response.json();
 
-  if (dataString) {
-    const gameData = JSON.parse(dataString);
-    game.level = gameData.level;
-
-    game.hero.loadData(gameData.heroStats);
+    game.level = data.level;
+    lvlIndicator.innerText = game.level;
 
     game.inventory.length = 0;
-    game.inventory.push(...gameData.bag);
+    game.inventory.push(...data.inventory);
 
-    lvlIndicator.innerText = game.level;
-    console.log("Game loaded.");
+    game.hero.hp = data.heroStats.hp;
+    game.hero.maxHp = data.heroStats.maxHp;
+    game.hero.damage = data.heroStats.damage;
+    game.hero.gold = data.heroStats.gold;
+
+    console.log("Game loaded successfully.");
+  } catch (e) {
+    console.error("Failed to load game from server.", e);
   }
 };
 
@@ -522,7 +535,7 @@ const startApp = async () => {
     loadingScreen.style.display = "none";
     gameApp.style.display = "block"; // тут мы игру начинаем, блокируем её, то биш начинаем
 
-    loadGame();
+    await loadGame();
 
     if (!game.currentEnemy) game.currentEnemy = game.enemies[0];
 

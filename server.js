@@ -9,6 +9,9 @@ const PORT = 3000;
 // Подключение CORS (возможность серверу брать информацию из другого источника. Источник как сервер, так и пк может быть)
 app.use(cors());
 
+// Учим сервер понимать json
+app.use(express.json());
+
 // Создаем игру один раз при запуске сервера
 const myGame = new Game();
 
@@ -142,6 +145,33 @@ app.get("/sync", (req, res) => {
   res.json({
     message: "Server synchronized. New enemy ready to fight.",
     enemyStatus: myGame.currentEnemy,
+  });
+});
+
+// load and save
+
+app.post("/save-game", (req, res) => {
+  const savedLevel = req.body.level;
+  const savedInventory = req.body.inventory;
+  const savedGold = req.body.gold;
+
+  if (savedLevel) myGame.level = savedLevel;
+  if (savedInventory) myGame.inventory = savedInventory;
+  if (savedGold) myGame.hero.gold = savedGold;
+
+  res.json({ message: "Save successed." });
+});
+
+app.get("/load-game", (req, res) => {
+  res.json({
+    level: myGame.level || 1,
+    inventory: myGame.inventory || [],
+    heroStats: {
+      hp: myGame.hero.hp,
+      maxHp: myGame.hero.maxHp,
+      damage: myGame.hero.damage,
+      gold: myGame.hero.gold,
+    },
   });
 });
 
