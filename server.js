@@ -209,6 +209,34 @@ app.get("/sync", (req, res) => {
   });
 });
 
+// Логика магазина
+app.get("/buy-item", (req, res) => {
+  const itemToBuy = req.query.item;
+
+  if (itemToBuy === ITEMS.BOMB) {
+    if (myGame.hero.gold >= SETTINGS.BOMB_COST) {
+      myGame.hero.gold -= SETTINGS.BOMB_COST;
+      myGame.inventory.push(ITEMS.BOMB);
+
+      res.json({
+        success: true,
+        message: `You bought a ${ITEMS.BOMB} for ${SETTINGS.BOMB_COST} gold.`,
+        goldLeft: myGame.hero.gold,
+        inventory: myGame.inventory,
+      });
+    } else {
+      res.json({
+        message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}.`,
+      });
+    }
+  } else {
+    res.json({
+      success: false,
+      message: "Item not found in shop.",
+    });
+  }
+});
+
 // load and save
 app.post("/save-game", (req, res) => {
   const savedLevel = req.body.level;

@@ -462,25 +462,34 @@ myBtn.addEventListener("click", async () => {
 myRestart.addEventListener("click", initGame);
 myResStat.addEventListener("click", resetProgress);
 
-buyBtn.addEventListener("click", () => {
+buyBtn.addEventListener("click", async () => {
   if (game.state !== GAME_STATE.PLAYING && game.state !== GAME_STATE.VICTORY) {
     console.log("Game is over, you cannot do anything with your inventory.");
     return;
   }
 
-  const isTransactionSuccess = game.hero.spendGold(SETTINGS.BOMB_COST);
-  if (isTransactionSuccess) {
-    game.inventory.push(ITEMS.BOMB);
-    renderInventory();
-
-    logMessage(
-      `You bought a bomb. It cost 100 gold. Your balance: ${game.hero.gold}.`,
-      "black",
+  try {
+    const response = await fetch(
+      `http://localhost:3000/buy-item?item=${ITEMS.BOMB}`,
     );
+    const data = await response.json();
 
-    saveGame();
-  } else {
-    logMessage(`Not enough money, bucko!`, "red");
+    if (data.success) {
+      game.hero.gold = data.goldLeft;
+      game.inventory.length = 0;
+      game.inventory.push(...data.inventory);
+
+      renderInventory();
+      logMessage(
+        `Server: ${data.message}. Balance: ${game.hero.gold}`,
+        "purple",
+      );
+      saveGame();
+    } else {
+      logMessage(`Server: ${data.message}`, "purple");
+    }
+  } catch (e) {
+    console.error("Shop is closed (Server unavailable): ", e);
   }
 });
 
