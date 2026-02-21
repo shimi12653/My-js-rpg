@@ -214,7 +214,7 @@ const dropLoot = async () => {
     game.inventory.push(...data.inventory);
     game.hero.gold = data.gold;
 
-    logMessage(`Server: ${data.message}`, "black");
+    logMessage(`Server: ${data.message}`, "purple");
 
     renderInventory();
   } catch (e) {

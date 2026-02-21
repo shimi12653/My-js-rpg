@@ -1,8 +1,12 @@
-import express from "express";
+"use script";
+
+import express, { raw } from "express";
 import cors from "cors";
+import fs from "fs";
 import { Game } from "./Game.js"; // 1. Импортируем нашу игру
 import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с null
 import { ITEMS, SETTINGS } from "./constants.js";
+import { error } from "console";
 
 const app = express();
 const PORT = 3000;
@@ -15,6 +19,31 @@ app.use(express.json());
 
 // Создаем игру один раз при запуске сервера
 const myGame = new Game();
+
+// Инициализация БД при старте сервера
+const DB = "temporary_database.json";
+
+//Проверка на наличие БД
+if (fs.existsSync(DB)) {
+  try {
+    const rawData = fs.readFileSync(DB, "utf-8");
+
+    const savedData = JSON.parse(rawData);
+
+    myGame.level = savedData.level;
+    myGame.inventory = savedData.inventory;
+    myGame.hero.hp = savedData.heroStats.hp;
+    myGame.hero.maxHp = savedData.heroStats.maxHp;
+    myGame.hero.damage = savedData.heroStats.damage;
+    myGame.hero.gold = savedData.heroStats.gold;
+
+    console.log("Progress was successfully loaded from temporary database.");
+  } catch (e) {
+    console.error("Progress is not read. Error: ", error);
+  }
+} else {
+  console.log("Database is not found.", error);
+}
 
 const calculateWeaponDamage = (base) => {
   const variance = 0.2;
@@ -53,7 +82,7 @@ app.get("/game-status", (req, res) => {
   });
 });
 
-// drop system
+// система дропа
 app.get("/generate-loot", (req, res) => {
   let droppedItem = null;
   let message = "No loot found.";
@@ -79,7 +108,7 @@ app.get("/generate-loot", (req, res) => {
   });
 });
 
-// attack method (enemy and hero)
+// метод атаки (враг и герой)
 app.get("/enemy-attack", (req, res) => {
   const currentLevel = parseInt(req.query.level) || 1;
 
@@ -128,7 +157,7 @@ app.get("/bomb", (req, res) => {
   });
 });
 
-// hero stats operations (heal, reset and lvl up)
+// операции со статистикой героя (исцеление, сброс и повышение уровня)
 app.get("/heal-hero", (req, res) => {
   myGame.hero.hp = myGame.hero.maxHp;
 
@@ -163,7 +192,7 @@ app.get("/level-up", (req, res) => {
   });
 });
 
-// synchronization fronted and backend (enemy and hero)
+// синхронизация фронт-энда и бэк-энда (враг и герой)
 app.get("/sync", (req, res) => {
   const syncEnemyHp = parseInt(req.query.hp) || 100;
   const syncEnemyName = req.query.name || "Unknown";
@@ -187,6 +216,20 @@ app.post("/save-game", (req, res) => {
   if (savedLevel) myGame.level = savedLevel;
   if (savedInventory) myGame.inventory = savedInventory;
   if (savedGold) myGame.hero.gold = savedGold;
+
+  const dataToSave = {
+    level: myGame.level,
+    inventory: myGame.inventory,
+    heroStats: {
+      hp: myGame.hero.hp,
+      maxHp: myGame.hero.maxHp,
+      damage: myGame.hero.damage,
+      gold: myGame.hero.gold,
+    },
+  };
+
+  // Создание и запись во временную базу данных данных о герое
+  fs.writeFileSync(DB, JSON.stringify(dataToSave, null, 2));
 
   res.json({ message: "Save successed." });
 });
