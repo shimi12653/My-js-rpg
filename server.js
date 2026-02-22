@@ -36,6 +36,7 @@ if (fs.existsSync(DB)) {
     myGame.hero.maxHp = savedData.heroStats.maxHp;
     myGame.hero.damage = savedData.heroStats.damage;
     myGame.hero.gold = savedData.heroStats.gold;
+    myGame.hero.equippedWeapons = savedData.heroStats.equippedWeapons || 0;
 
     console.log("Progress was successfully loaded from temporary database.");
   } catch (e) {
@@ -237,6 +238,78 @@ app.get("/buy-item", (req, res) => {
   }
 });
 
+// Логика инвентаря
+app.get("/use-item", (req, res) => {
+  const itemIndex = parseInt(req.query.index);
+
+  if (
+    isNaN(itemIndex) ||
+    itemIndex >= myGame.inventory.length ||
+    itemIndex < 0
+  ) {
+    return res.json({
+      success: false,
+      message: "Item not found or already used.",
+    });
+  }
+
+  const item = myGame.inventory[itemIndex];
+  let message = "";
+  let isEnemyDead = false;
+
+  if (item === ITEMS.POTION) {
+    if (myGame.hero.hp <= 0) {
+      return res.json({
+        success: false,
+        message: `You are dead. You can't do anything.`,
+      });
+    }
+
+    myGame.hero.hp += SETTINGS.HEAL_AMOUNT;
+    if (myGame.hero.hp >= myGame.hero.maxHp) myGame.hero.hp = myGame.hero.maxHp;
+    message = `You used a healing pation! +${SETTINGS.HEAL_AMOUNT} HP.`;
+  } else if (item === ITEMS.DAGGER) {
+    if (myGame.hero.equippedWeapons >= myGame.hero.maxHands) {
+      return res.json({
+        success: false,
+        message: `You can't pick more than ${myGame.hero.maxHands} swords.`,
+      });
+    }
+
+    myGame.hero.equippedWeapons++;
+    myGame.hero.damage += SETTINGS.WEAPON_DAMAGE;
+    message = `You equipped ${ITEMS.DAGGER}. +${SETTINGS.WEAPON_DAMAGE} DMG.`;
+  } else if (item === ITEMS.BOMB) {
+    if (myGame.currentEnemy.hp <= 0) {
+      return res.json({
+        success: false,
+        message: `Enemy is dead. Why do you need to use a bomb?`,
+      });
+    }
+
+    myGame.currentEnemy.hp -= SETTINGS.BOMB_DAMAGE;
+
+    if (myGame.currentEnemy.hp > 0) {
+      message = `BOOM! -${SETTINGS.BOMB_DAMAGE} enemy hp.`;
+    } else {
+      message = `BOOM! Fatal damage. -${SETTINGS.BOMB_DAMAGE} enemy hp`;
+      isEnemyDead = true;
+    }
+  }
+
+  myGame.inventory.splice(itemIndex, 1);
+
+  res.json({
+    success: true,
+    itemUsed: item,
+    message: message,
+    isEnemyDead: isEnemyDead,
+    inventory: myGame.inventory,
+    heroStats: myGame.hero,
+    enemyHpLeft: myGame.currentEnemy.hp,
+  });
+});
+
 // load and save
 app.post("/save-game", (req, res) => {
   const savedLevel = req.body.level;
@@ -255,6 +328,7 @@ app.post("/save-game", (req, res) => {
       maxHp: myGame.hero.maxHp,
       damage: myGame.hero.damage,
       gold: myGame.hero.gold,
+      equippedWeapons: myGame.hero.equippedWeapons,
     },
   };
 
@@ -273,6 +347,7 @@ app.get("/load-game", (req, res) => {
       maxHp: myGame.hero.maxHp,
       damage: myGame.hero.damage,
       gold: myGame.hero.gold,
+      equippedWeapons: myGame.hero.equippedWeapons,
     },
   });
 });

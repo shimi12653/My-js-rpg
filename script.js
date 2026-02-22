@@ -68,7 +68,7 @@ const renderInventory = () => {
     newLi.innerText = item;
     newLi.style.cursor = "pointer";
 
-    newLi.addEventListener("click", () => {
+    newLi.addEventListener("click", async () => {
       if (game.isProccessingTurn) {
         console.log("Enemy is atttacking. BE READY!");
         return;
@@ -84,122 +84,70 @@ const renderInventory = () => {
         return;
       }
 
-      const updateInventory = () => {
-        game.inventory.splice(index, 1);
-        renderInventory();
-        saveGame();
-      };
+      try {
+        const responce = await fetch(
+          `http://localhost:3000/use-item?index=${index}`,
+        );
+        const data = await responce.json();
 
-      if (item === ITEMS.POTION) {
-        if (game.hero.hp <= 0) {
-          logMessage("You used a potion, but you are already dead.", "red");
-        } else {
-          game.hero.heal(SETTINGS.HEAL_AMOUNT);
-          updateHeroUI();
+        if (data.success) {
+          game.inventory.length = 0;
+          game.inventory.push(...data.inventory);
+
+          game.hero.hp = data.heroStats.hp;
+          game.hero.maxHp = data.heroStats.maxHp;
+          game.hero.damage = data.heroStats.damage;
+          game.currentEnemy.hp = data.enemyHpLeft;
 
           logMessage(
-            `You use a healing potion! Hp: ${SETTINGS.HEAL_AMOUNT}`,
-            "black",
+            `Server: ${data.message}`,
+            data.itemUsed === ITEMS.BOMB ? "red" : "purple",
           );
-        }
 
-        updateInventory();
-      } else if (item === ITEMS.BOMB) {
-        if (game.currentEnemy.hp > SETTINGS.BOMB_DAMAGE) {
-          game.currentEnemy.hp -= SETTINGS.BOMB_DAMAGE;
-
-          fetch("http://localhost:3000/bomb")
-            .then((response) => response.json())
-            .then((data) =>
-              logMessage(
-                `Server: ${data.message} (Enemy HP: ${data.enemyHpLeft})`,
-                "purple",
-                "bold",
-              ),
-            )
-            .catch((error) =>
-              console.error("Bomb error on the server: ", error),
-            );
-
-          logMessage(`BOOM! -${SETTINGS.BOMB_DAMAGE} enemy hp`, "red");
-
-          game.isProccessingTurn = true;
-          toggleControls(true);
-
-          setTimeout(() => {
-            enemyAttack();
-            game.isProccessingTurn = false;
-            if (
-              game.state === GAME_STATE.PLAYING ||
-              game.state === GAME_STATE.VICTORY
-            ) {
-              toggleControls(false);
-
-              if (game.state === GAME_STATE.VICTORY) {
-                myBtn.disabled = true;
-                myBtn.style.color = "#BBB";
-              }
+          if (data.itemUsed === ITEMS.BOMB) {
+            if (data.isEnemyDead) {
+              handleVictory();
             } else {
-              toggleControls(false);
-              myBtn.disabled = true;
-              buyBtn.disabled = true;
+              game.isProccessingTurn = true;
+              toggleControls(true);
+
+              setTimeout(async () => {
+                await enemyAttack();
+                game.isProccessingTurn = false;
+
+                if (
+                  game.state === GAME_STATE.PLAYING ||
+                  game.state === GAME_STATE.VICTORY
+                ) {
+                  toggleControls(false);
+                  if (game.state === GAME_STATE.VICTORY) myBtn.disabled = true;
+                } else {
+                  toggleControls(false);
+                  myBtn.disabled = true;
+                  buyBtn.disabled = true;
+                }
+                saveGame();
+              }, SETTINGS.ENEMY_TURN_DELAY);
             }
-            saveGame();
-          }, SETTINGS.ENEMY_TURN_DELAY);
-        } else if (game.currentEnemy.hp === 0) {
-          logMessage("You used a bomb, but enemy is already dead.", "red");
+          }
+
+          updateHeroUI();
+          renderInventory();
+
+          mySpan.innerText = game.currentEnemy.hp;
+          const barWidth =
+            (game.currentEnemy.hp / (game.currentEnemy.maxHp * game.level)) *
+            100;
+          myHpBar.style.width = `${barWidth}%`;
+
+          if (data.itemUsed !== ITEMS.BOMB) saveGame();
         } else {
-          fetch("http://localhost:3000/bomb")
-            .then((response) => response.json())
-            .then((data) =>
-              logMessage(
-                `Server: ${data.message} (Enemy HP: ${data.enemyHpLeft})`,
-                "purple",
-                "bold",
-              ),
-            )
-            .catch((error) =>
-              console.error("Bomb error on the server: ", error),
-            );
-
-          handleVictory();
-
-          logMessage("BOOM! Fatal damage!", "black");
+          logMessage(data.message, "red");
         }
-
-        updateInventory();
-      } else if (item === ITEMS.DAGGER) {
-        const weaponDamage = SETTINGS.WEAPON_DAMAGE;
-
-        const isEquipped = game.hero.equipWeapon(weaponDamage);
-
-        if (isEquipped) {
-          logMessage(
-            `You equipped ${item} and get +${weaponDamage} to your attack. Total damage: ${game.hero.damage}`,
-            "black",
-          );
-
-          updateInventory();
-        } else {
-          logMessage(
-            `You can't take more than ${game.hero.maxHands} swords.`,
-            "red",
-          );
-        }
-      } else if (item === ITEMS.GOLD) {
-        game.hero.addGold(SETTINGS.GOLD_DROP);
-
-        logMessage(`Here we go! You have ${game.hero.gold} gold.`, "black");
-
-        updateInventory();
+      } catch (e) {
+        console.error("Failed to use item on server: ", e);
       }
-
-      mySpan.innerText = game.currentEnemy.hp;
-      const barWidth =
-        (game.currentEnemy.hp / (game.currentEnemy.maxHp * game.level)) * 100;
-      myHpBar.style.width = `${barWidth}%`;
     });
-
     myUl.appendChild(newLi);
   });
 };
@@ -528,6 +476,7 @@ const loadGame = async () => {
     game.hero.maxHp = data.heroStats.maxHp;
     game.hero.damage = data.heroStats.damage;
     game.hero.gold = data.heroStats.gold;
+    game.hero.equippedWeapons = data.heroStats.equippedWeapons || 0;
 
     console.log("Game loaded successfully.");
   } catch (e) {

@@ -1,12 +1,11 @@
 {
   "level": 5,
-  "inventory": [
-    "Bomb"
-  ],
+  "inventory": [],
   "heroStats": {
-    "hp": 135,
+    "hp": 54,
     "maxHp": 180,
-    "damage": 23,
-    "gold": 0
+    "damage": 28,
+    "gold": 0,
+    "equippedWeapons": 2
   }
 }
