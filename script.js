@@ -2,8 +2,21 @@
 
 import { Game } from "./Game.js";
 import { ITEMS, GAME_STATE } from "./constants.js";
-import { fetchEnemies } from "./api.js";
 import { SETTINGS } from "./constants.js";
+import {
+  apiHealHero,
+  apiLoadGame,
+  apiSaveGame,
+  apiUseItem,
+  apiGenerateLoot,
+  apiLevelUp,
+  apiEnemyAttack,
+  apiResetHero,
+  apiSyncEnemy,
+  apiHit,
+  apiBuyItem,
+  apiFetchEnemies,
+} from "./network.js";
 
 const myBtn = document.querySelector("#attack-btn");
 const mySpan = document.querySelector("#enemy-hp");
@@ -26,15 +39,6 @@ const goldBalance = document.querySelector("#gold-balance");
 let regenTimer; // Таймер регена врага на 5% от макс хп
 
 const game = new Game();
-
-// Выбор врага
-enemySelect.addEventListener("change", () => {
-  const enemyIndex = parseInt(enemySelect.value);
-
-  game.currentEnemy = game.enemies[enemyIndex];
-
-  initGame();
-});
 
 // Обая функция логов
 const logMessage = (text, color = "black", fontWeight = "normal") => {
@@ -91,10 +95,7 @@ const renderInventory = () => {
       }
 
       try {
-        const responce = await fetch(
-          `http://localhost:3000/use-item?index=${index}`,
-        );
-        const data = await responce.json();
+        const data = await apiUseItem(index);
 
         if (data.success) {
           game.inventory.length = 0;
@@ -163,8 +164,7 @@ const renderInventory = () => {
 // Функционал выпадения предметов
 const dropLoot = async () => {
   try {
-    const response = await fetch("http://localhost:3000/generate-loot");
-    const data = await response.json();
+    const data = await apiGenerateLoot();
 
     game.inventory.length = 0;
     game.inventory.push(...data.inventory);
@@ -183,60 +183,59 @@ const dropLoot = async () => {
 const handleVictory = async () => {
   game.currentEnemy.hp = 0;
   mySpan.innerText = 0;
-
   mySpan.style.color = "red";
   myBtn.disabled = true;
   myBtn.style.color = "#BBBBBB";
-
   logMessage("Enemy is dead. Victory!", "blue", "bold");
   myHpBar.style.width = "0%";
-
   clearInterval(regenTimer);
 
-  await dropLoot();
-
-  game.state = GAME_STATE.VICTORY;
-
-  game.level++;
-  lvlIndicator.innerText = game.level;
-
-  game.hero.maxHp += SETTINGS.LEVEL_UP_HP;
-  game.hero.hp += SETTINGS.LEVEL_UP_HP;
-  game.hero.damage += SETTINGS.LEVEL_UP_DAMAGE;
-
   try {
-    const response = await fetch(
-      `http://localhost:3000/level-up?maxHp=${game.hero.maxHp}&hp=${game.hero.hp}&damage=${game.hero.damage}`,
-    );
-    const data = await response.json();
+    await dropLoot();
+
+    const newLevel = game.level + 1;
+    const newMaxHp = game.hero.maxHp + SETTINGS.LEVEL_UP_HP;
+    const newHp = game.hero.hp + SETTINGS.LEVEL_UP_HP;
+    const newDamage = game.hero.damage + SETTINGS.LEVEL_UP_DAMAGE;
+
+    const data = await apiLevelUp(newMaxHp, newHp, newDamage);
+
     console.log("Server sync: ", data.message);
+
+    game.state = GAME_STATE.VICTORY;
+    game.level = newLevel;
+    lvlIndicator.innerText = game.level;
+
+    game.hero.hp = newHp;
+    game.hero.maxHp = newMaxHp;
+    game.hero.damage = newDamage;
+
+    updateHeroUI();
+
+    logMessage(`Level up! Current level: ${game.level}`, "black");
+    logMessage(
+      `Stats up: +${SETTINGS.LEVEL_UP_HP} HP, +${SETTINGS.LEVEL_UP_DAMAGE} DMG`,
+      "blue",
+    );
+    logMessage(
+      `Total stats: HP: ${game.hero.maxHp}, Damage: ${game.hero.damage}`,
+    );
+
+    await saveGame();
   } catch (e) {
     console.error("Level up sync failed: ", e);
+    logMessage(
+      "Network error: failed to sync victory. Progress might not be saved.",
+      "red",
+      "bold",
+    );
   }
-
-  updateHeroUI();
-
-  logMessage(`Level up! Current level: ${game.level}`, "black");
-  logMessage(
-    `Stats up: +${SETTINGS.LEVEL_UP_HP} HP, +${SETTINGS.LEVEL_UP_DAMAGE} DMG`,
-    "blue",
-  );
-  logMessage(
-    `Total stats: HP: ${game.hero.maxHp}, Damage: ${game.hero.damage}`,
-  );
-
-  myBtn.disabled = true;
-
-  saveGame();
 };
 
 const enemyAttack = async () => {
   // Увеличение урона врага на 20% за 1 лвл
   try {
-    const response = await fetch(
-      `http://localhost:3000/enemy-attack?level=${game.level}`,
-    );
-    const data = await response.json();
+    const data = await apiEnemyAttack(game.level);
 
     game.hero.hp = data.heroHpLeft;
     updateHeroUI();
@@ -260,21 +259,23 @@ const enemyAttack = async () => {
   }
 };
 
-const resetProgress = () => {
-  game.reset();
+const resetProgress = async () => {
+  try {
+    const data = await apiResetHero();
 
-  lvlIndicator.innerText = game.level;
+    game.reset();
+    lvlIndicator.innerText = game.level;
 
-  fetch("http://localhost:3000/reset-hero")
-    .then((response) => response.json())
-    .then((data) => console.log("Server status: ", data.message))
-    .catch((e) => console.error("Failed to reset on server.", e));
+    console.log(data.message);
+  } catch (e) {
+    console.error("Failed to reset on server.", e);
+  }
 
-  saveGame();
+  await saveGame(); // await тут конкретно необязательно писать (он выполниться в любом случае, поскольку функция async), но пусть лучше будет
   initGame();
 };
 
-const initGame = () => {
+const initGame = async () => {
   game.state = GAME_STATE.PLAYING;
 
   game.isProccessingTurn = false;
@@ -283,21 +284,30 @@ const initGame = () => {
   if (game.hero.hp <= 0) {
     game.hero.hp = game.hero.maxHp;
 
-    fetch("http://localhost:3000/heal-hero").catch((e) =>
-      console.error("Failed to heal a hero on server. Reason: ", e),
-    );
+    try {
+      const data = await apiHealHero();
+
+      console.log(data.message);
+    } catch (e) {
+      console.error("Failed to heal a hero on server. Reason: ", e);
+    }
   }
 
   updateHeroUI();
 
   game.currentEnemy.hp = Math.floor(game.currentEnemy.maxHp * game.level);
 
-  fetch(
-    `http://localhost:3000/sync?name=${game.currentEnemy.name}&hp=${game.currentEnemy.hp}&damage=${game.currentEnemy.damage}`,
-  )
-    .then((response) => response.json())
-    .then((data) => console.log("Synchronization: ", data.message))
-    .catch((e) => console.error("Sync failed: ", e));
+  try {
+    const data = await apiSyncEnemy(
+      game.currentEnemy.name,
+      game.currentEnemy.hp,
+      game.currentEnemy.damage,
+    );
+
+    console.log("Synchronization: ", data.message);
+  } catch (e) {
+    console.error("Sync failed: ", e);
+  }
 
   toggleControls(false);
 
@@ -353,8 +363,7 @@ myBtn.addEventListener("click", async () => {
   if (game.isProccessingTurn) return;
 
   try {
-    const response = await fetch(`http://localhost:3000/hit`);
-    const data = await response.json();
+    const data = await apiHit();
 
     logMessage(
       `Server: ${data.message} (Damage: ${data.damageDealt}, Enemy HP: ${data.enemyHpLeft})`,
@@ -426,10 +435,7 @@ buyBtn.addEventListener("click", async () => {
   }
 
   try {
-    const response = await fetch(
-      `http://localhost:3000/buy-item?item=${ITEMS.BOMB}`,
-    );
-    const data = await response.json();
+    const data = await apiBuyItem(ITEMS.BOMB);
 
     if (data.success) {
       game.hero.gold = data.goldLeft;
@@ -450,30 +456,34 @@ buyBtn.addEventListener("click", async () => {
   }
 });
 
+// Выбор врага
+enemySelect.addEventListener("change", () => {
+  const enemyIndex = parseInt(enemySelect.value);
+
+  game.currentEnemy = game.enemies[enemyIndex];
+
+  initGame();
+});
+
 // Сохранение игры на локальный диск
-const saveGame = () => {
+const saveGame = async () => {
   const payload = {
     level: game.level,
     inventory: game.inventory,
     gold: game.hero.gold,
   };
 
-  fetch("http://localhost:3000/save-game", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json", // Сервер понимает, что внутри джсон
-    },
-    body: JSON.stringify(payload),
-  })
-    .then((response) => response.json())
-    .then((data) => console.log("Server save: ", data.message))
-    .catch((e) => console.error("Failed to save to server.", e));
+  try {
+    const data = await apiSaveGame(payload);
+    console.log("Server save: ", data.message);
+  } catch (e) {
+    console.error("Failed to save game to the server: ", e);
+  }
 };
 
 const loadGame = async () => {
   try {
-    const response = await fetch("http://localhost:3000/load-game");
-    const data = await response.json();
+    const data = await apiLoadGame();
 
     game.level = data.level;
     lvlIndicator.innerText = game.level;
@@ -497,7 +507,7 @@ const startApp = async () => {
   try {
     loadingScreen.style.display = "flex";
 
-    game.enemies = await fetchEnemies();
+    game.enemies = await apiFetchEnemies();
 
     game.currentEnemy = game.enemies[0];
 
