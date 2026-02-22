@@ -20,6 +20,8 @@ const loadingScreen = document.querySelector("#loading-screen");
 const gameApp = document.querySelector("#game-app");
 const heroHp = document.querySelector("#hero-hp");
 const heroHpBar = document.querySelector("#hero-hp-bar");
+const heroWeapons = document.querySelector("#hero-weapons");
+const goldBalance = document.querySelector("#gold-balance");
 
 let regenTimer; // Таймер регена врага на 5% от макс хп
 
@@ -54,6 +56,10 @@ const logMessage = (text, color = "black", fontWeight = "normal") => {
 // Жизни и бар хп героя
 const updateHeroUI = () => {
   heroHp.innerText = game.hero.hp;
+
+  heroWeapons.innerText = `${game.hero.equippedWeapons}/${game.hero.maxHands}`;
+
+  goldBalance.innerText = game.hero.gold;
 
   const hpPercent = Math.max(0, (game.hero.hp / game.hero.maxHp) * 100);
   heroHpBar.style.width = `${hpPercent}%`;
@@ -97,6 +103,8 @@ const renderInventory = () => {
           game.hero.hp = data.heroStats.hp;
           game.hero.maxHp = data.heroStats.maxHp;
           game.hero.damage = data.heroStats.damage;
+          game.hero.gold = data.heroStats.gold;
+          game.hero.equippedWeapons = data.heroStats.equippedWeapons;
           game.currentEnemy.hp = data.enemyHpLeft;
 
           logMessage(
@@ -165,6 +173,7 @@ const dropLoot = async () => {
     logMessage(`Server: ${data.message}`, "purple");
 
     renderInventory();
+    updateHeroUI();
   } catch (e) {
     console.error("Loot generation failed: ", e);
   }

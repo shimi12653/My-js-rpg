@@ -172,6 +172,8 @@ app.get("/reset-hero", (req, res) => {
   myGame.hero.hp = 100;
   myGame.hero.maxHp = 100;
   myGame.hero.damage = 10;
+  myGame.hero.equippedWeapons = 0;
+  myGame.hero.gold = 0;
 
   res.json({
     message: "Hero stats was successfully reset to default.",
@@ -295,6 +297,9 @@ app.get("/use-item", (req, res) => {
       message = `BOOM! Fatal damage. -${SETTINGS.BOMB_DAMAGE} enemy hp`;
       isEnemyDead = true;
     }
+  } else if (item === ITEMS.GOLD) {
+    myGame.hero.gold += SETTINGS.GOLD_DROP;
+    message = `You used a bad of Gold! +${SETTINGS.GOLD_DROP} coins.`;
   }
 
   myGame.inventory.splice(itemIndex, 1);
