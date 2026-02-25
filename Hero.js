@@ -2,12 +2,13 @@ import { SETTINGS } from "./constants.js";
 
 export class Hero {
   constructor() {
-    this.damage = 10;
+    this.damage = 5;
     this.gold = SETTINGS.STARTING_GOLD;
     this.equippedWeapons = 0;
     this.maxHands = SETTINGS.MAX_HANDS;
     this.hp = 100;
     this.maxHp = SETTINGS.HERO_MAX_HP;
+    this.weapons = []; // Массив для счёта оружия
   }
 
   takeDamage(amount) {
@@ -21,10 +22,11 @@ export class Hero {
   }
 
   // Метод, где берём оружие в руки
-  equipWeapon(extraDamage) {
+  equipWeapon(weaponObject) {
     if (this.equippedWeapons < this.maxHands) {
-      this.damage += extraDamage;
-      this.equippedWeapons++;
+      this.weapons.push(weaponObject); // помещаем оружие в инвентарь
+      this.damage += weaponObject.baseDamage; // увеличиваем дамаг героя
+      this.equippedWeapons++; // оружие занимает место в руках
       return true;
     } else {
       return false;

@@ -6,7 +6,7 @@ import fs from "fs";
 import { Game } from "./Game.js"; // 1. Импортируем нашу игру
 import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с null
 import { ITEMS, SETTINGS } from "./constants.js";
-import { error } from "console";
+import { Weapon, Dagger, HSword } from "./weapon.js";
 
 const app = express();
 const PORT = 3000;
@@ -38,28 +38,32 @@ if (fs.existsSync(DB)) {
     myGame.hero.gold = savedData.heroStats.gold;
     myGame.hero.equippedWeapons = savedData.heroStats.equippedWeapons || 0;
 
+    // Тут происходит приведение текста в массив оружия
+    if (savedData.heroStats?.weapons) {
+      myGame.hero.weapons = savedData.heroStats.weapons.map((savedWeapon) => {
+        if (savedWeapon.name === "Rusty dagger") {
+          // если название сохранённого оружия - 'Rusty dagger' ...
+          return new Dagger(); // Возвращается класс Dagger
+        } else if (savedWeapon.name === "Heavy sword") {
+          return new HSword(); // Также и с Heavy sword
+        } else {
+          // И с любым другим видом оружия
+          return new Weapon(
+            savedWeapon.name,
+            savedWeapon.baseDamage,
+            savedData.handsRequired,
+          );
+        }
+      });
+    }
+
     console.log("Progress was successfully loaded from temporary database.");
   } catch (e) {
-    console.error("Progress is not read. Error: ", error);
+    console.error("Progress is not read. Error: ", e);
   }
 } else {
-  console.log("Database is not found.", error);
+  console.log("Database is not found.");
 }
-
-const calculateWeaponDamage = (base) => {
-  const variance = 0.2;
-  const min = Math.ceil(base * (1 - variance));
-  const max = Math.floor(base * (1 + variance));
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-const applyCrit = (damage) => {
-  const CRIT_CHANCE = 0.3;
-  if (Math.random() < CRIT_CHANCE) {
-    return damage * 2.0;
-  }
-  return damage;
-};
 
 // Для консоли прописал стокового врага
 myGame.currentEnemy = new Enemy("Server Goblin", 100, 10);
@@ -129,19 +133,41 @@ app.get("/enemy-attack", (req, res) => {
 });
 
 app.get("/hit", (req, res) => {
-  const heroBaseDamage = myGame.hero.damage;
+  let pureHeroDamage = myGame.hero.damage;
 
-  const rawDamage = calculateWeaponDamage(heroBaseDamage);
-  const finalDamage = applyCrit(rawDamage);
+  for (const wpn of myGame.hero.weapons) {
+    pureHeroDamage -= wpn.baseDamage;
+  }
 
-  const isCrit = finalDamage > rawDamage;
+  if (pureHeroDamage < 5) pureHeroDamage = 5;
 
-  myGame.currentEnemy.takeDamage(finalDamage);
+  const variance = 0.2;
+  const minHeroDamage = Math.ceil(pureHeroDamage * (1 - variance));
+  const maxHeroDamage = Math.floor(pureHeroDamage * (1 + variance));
+
+  let totalDamage =
+    Math.floor(Math.random() * (maxHeroDamage - minHeroDamage + 1)) +
+    minHeroDamage;
+
+  let isAnyCrit = false;
+
+  for (const wpn of myGame.hero.weapons) {
+    const hitResult = wpn.calcDamage();
+
+    totalDamage += hitResult.damage;
+
+    if (hitResult.isCrit) {
+      isAnyCrit = true;
+    }
+  }
+
+  myGame.currentEnemy.takeDamage(totalDamage);
 
   res.json({
-    message: isCrit ? "Critical Hit!" : "Regular Hit!",
-    damageDealt: finalDamage,
-    isCrit: isCrit,
+    success: true,
+    message: isAnyCrit ? "Critical hit!" : "Regular hit.",
+    damageDealt: totalDamage,
+    isCrit: isAnyCrit,
     enemyHpLeft: myGame.currentEnemy.hp,
   });
 });
@@ -171,9 +197,10 @@ app.get("/heal-hero", (req, res) => {
 app.get("/reset-hero", (req, res) => {
   myGame.hero.hp = 100;
   myGame.hero.maxHp = 100;
-  myGame.hero.damage = 10;
+  myGame.hero.damage = 5;
   myGame.hero.equippedWeapons = 0;
   myGame.hero.gold = 0;
+  myGame.hero.weapons = []; // Очищаем массив при ресете
 
   res.json({
     message: "Hero stats was successfully reset to default.",
@@ -271,16 +298,16 @@ app.get("/use-item", (req, res) => {
     if (myGame.hero.hp >= myGame.hero.maxHp) myGame.hero.hp = myGame.hero.maxHp;
     message = `You used a healing pation! +${SETTINGS.HEAL_AMOUNT} HP.`;
   } else if (item === ITEMS.DAGGER) {
-    if (myGame.hero.equippedWeapons >= myGame.hero.maxHands) {
+    const isEquipped = myGame.hero.equipWeapon(new Dagger());
+
+    if (!isEquipped) {
       return res.json({
         success: false,
         message: `You can't pick more than ${myGame.hero.maxHands} swords.`,
       });
     }
 
-    myGame.hero.equippedWeapons++;
-    myGame.hero.damage += SETTINGS.WEAPON_DAMAGE;
-    message = `You equipped ${ITEMS.DAGGER}. +${SETTINGS.WEAPON_DAMAGE} DMG.`;
+    message = `You equipped ${ITEMS.DAGGER}.`;
   } else if (item === ITEMS.BOMB) {
     if (myGame.currentEnemy.hp <= 0) {
       return res.json({
@@ -334,6 +361,7 @@ app.post("/save-game", (req, res) => {
       damage: myGame.hero.damage,
       gold: myGame.hero.gold,
       equippedWeapons: myGame.hero.equippedWeapons,
+      weapons: myGame.hero.weapons,
     },
   };
 

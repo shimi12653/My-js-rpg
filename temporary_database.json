@@ -1,11 +1,25 @@
 {
-  "level": 4,
-  "inventory": [],
+  "level": 2,
+  "inventory": [
+    "Healing Potion",
+    "Bomb",
+    "Gold",
+    "Rusty Dagger"
+  ],
   "heroStats": {
-    "hp": 111,
-    "maxHp": 160,
-    "damage": 21,
+    "hp": 108,
+    "maxHp": 120,
+    "damage": 17,
     "gold": 0,
-    "equippedWeapons": 1
+    "equippedWeapons": 1,
+    "weapons": [
+      {
+        "name": "Rusty dagger",
+        "baseDamage": 10,
+        "handsRequired": 1,
+        "critChance": 0.3,
+        "critMultiplier": 2
+      }
+    ]
   }
 }
