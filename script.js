@@ -35,6 +35,7 @@ const heroHp = document.querySelector("#hero-hp");
 const heroHpBar = document.querySelector("#hero-hp-bar");
 const heroWeapons = document.querySelector("#hero-weapons");
 const goldBalance = document.querySelector("#gold-balance");
+const buyHSwordBtn = document.querySelector("#but-heavy-sword-btn");
 
 let regenTimer; // Таймер регена врага на 5% от макс хп
 
@@ -352,11 +353,13 @@ const toggleControls = (isDisabled) => {
   enemySelect.disabled = isDisabled;
   myResStat.disabled = isDisabled;
   myRestart.disabled = isDisabled;
+  buyHSwordBtn.disabled = isDisabled;
 
   myBtn.style.color = isDisabled ? "#BBB" : "";
   buyBtn.style.color = isDisabled ? "#BBB" : "";
   myResStat.style.color = isDisabled ? "#BBB" : "";
   myRestart.style.color = isDisabled ? "#BBB" : "";
+  buyHSwordBtn.style.color = isDisabled ? "#BBB" : "";
 };
 
 myBtn.addEventListener("click", async () => {
@@ -427,6 +430,32 @@ myBtn.addEventListener("click", async () => {
 
 myRestart.addEventListener("click", initGame);
 myResStat.addEventListener("click", resetProgress);
+buyHSwordBtn.addEventListener("click", async () => {
+  if (game.state !== GAME_STATE.PLAYING && game.state !== GAME_STATE.VICTORY)
+    return;
+
+  try {
+    const data = await apiBuyItem(ITEMS.HSWORD);
+
+    if (data.success) {
+      game.hero.gold = data.goldLeft;
+      game.inventory.length = 0;
+      game.inventory.push(...data.inventory);
+
+      renderInventory();
+      updateHeroUI();
+      logMessage(
+        `Server: ${data.message}. Balance: ${game.hero.gold}.`,
+        "purple",
+      );
+      saveGame();
+    } else {
+      logMessage(`Server: ${data.message}.`, "purple");
+    }
+  } catch (e) {
+    console.error("Shop is closed: ", e);
+  }
+});
 
 buyBtn.addEventListener("click", async () => {
   if (game.state !== GAME_STATE.PLAYING && game.state !== GAME_STATE.VICTORY) {

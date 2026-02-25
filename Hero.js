@@ -23,10 +23,10 @@ export class Hero {
 
   // Метод, где берём оружие в руки
   equipWeapon(weaponObject) {
-    if (this.equippedWeapons < this.maxHands) {
+    if (this.equippedWeapons + weaponObject.handsRequired <= this.maxHands) {
       this.weapons.push(weaponObject); // помещаем оружие в инвентарь
       this.damage += weaponObject.baseDamage; // увеличиваем дамаг героя
-      this.equippedWeapons++; // оружие занимает место в руках
+      this.equippedWeapons += weaponObject.handsRequired; // оружие занимает в руках место
       return true;
     } else {
       return false;

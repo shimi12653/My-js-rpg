@@ -1,24 +1,22 @@
 {
   "level": 2,
   "inventory": [
-    "Healing Potion",
     "Bomb",
-    "Gold",
-    "Rusty Dagger"
+    "Rusty Dagger",
+    "Heavy Sword",
+    "Heavy Sword"
   ],
   "heroStats": {
-    "hp": 108,
+    "hp": 120,
     "maxHp": 120,
-    "damage": 17,
-    "gold": 0,
-    "equippedWeapons": 1,
+    "damage": 22,
+    "gold": 450,
+    "equippedWeapons": 2,
     "weapons": [
       {
-        "name": "Rusty dagger",
-        "baseDamage": 10,
-        "handsRequired": 1,
-        "critChance": 0.3,
-        "critMultiplier": 2
+        "name": "Heavy sword",
+        "baseDamage": 15,
+        "handsRequired": 2
       }
     ]
   }

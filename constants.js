@@ -9,6 +9,7 @@ export const ITEMS = {
   BOMB: "Bomb",
   DAGGER: "Rusty Dagger",
   GOLD: "Gold",
+  HSWORD: "Heavy Sword",
 };
 
 export const SETTINGS = {
@@ -27,7 +28,8 @@ export const SETTINGS = {
   // items
   GOLD_DROP: 50, // Имеется ввиду сколько золото с лута приносит
   BOMB_COST: 100,
-  STARTING_GOLD: 0,
+  STARTING_GOLD: 1000,
+  HSWORD_COST: 200,
 
   // progression
   LEVEL_UP_HP: 20,

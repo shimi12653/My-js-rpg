@@ -259,6 +259,23 @@ app.get("/buy-item", (req, res) => {
         message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}.`,
       });
     }
+  } else if (itemToBuy === ITEMS.HSWORD) {
+    if (myGame.hero.gold >= SETTINGS.HSWORD_COST) {
+      myGame.hero.gold -= SETTINGS.HSWORD_COST;
+      myGame.inventory.push(ITEMS.HSWORD);
+
+      res.json({
+        success: true,
+        message: `You bought a ${ITEMS.HSWORD} for ${SETTINGS.HSWORD_COST} gold.`,
+        goldLeft: myGame.hero.gold,
+        inventory: myGame.inventory,
+      });
+    } else {
+      res.json({
+        success: false,
+        message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
+      });
+    }
   } else {
     res.json({
       success: false,
@@ -308,6 +325,17 @@ app.get("/use-item", (req, res) => {
     }
 
     message = `You equipped ${ITEMS.DAGGER}.`;
+  } else if (item === ITEMS.HSWORD) {
+    const isEquipped = myGame.hero.equipWeapon(new HSword());
+
+    if (!isEquipped) {
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    }
+
+    message = `You equipped ${ITEMS.HSWORD}.`;
   } else if (item === ITEMS.BOMB) {
     if (myGame.currentEnemy.hp <= 0) {
       return res.json({
