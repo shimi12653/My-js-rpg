@@ -7,6 +7,7 @@ import { Game } from "./Game.js"; // 1. Импортируем нашу игру
 import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с null
 import { ITEMS, SETTINGS } from "./constants.js";
 import { Weapon, Dagger, HSword } from "./weapon.js";
+import { postMessageToThread } from "worker_threads";
 
 const app = express();
 const PORT = 3000;
@@ -367,6 +368,49 @@ app.get("/use-item", (req, res) => {
     inventory: myGame.inventory,
     heroStats: myGame.hero,
     enemyHpLeft: myGame.currentEnemy.hp,
+  });
+});
+
+// Логка продажи инвентаря
+app.get("/sell-item", (req, res) => {
+  const itemIndex = parseInt(req.query.index);
+
+  if (
+    isNaN(itemIndex) ||
+    itemIndex >= myGame.inventory.length ||
+    itemIndex < 0
+  ) {
+    return res.json({
+      success: false,
+      message: "Item not found.",
+    });
+  }
+
+  const item = myGame.inventory[itemIndex];
+  let message = "";
+
+  if (item === ITEMS.POTION) {
+    myGame.hero.gold += SETTINGS.POTION_SELL_PRICE;
+    message = `You sell a ${ITEMS.POTION} for ${SETTINGS.POTION_SELL_PRICE}.`;
+  } else if (item === ITEMS.DAGGER) {
+    myGame.hero.gold += SETTINGS.DAGGER_SELL_PRICE;
+    message = `You sell a ${ITEMS.DAGGER} for ${SETTINGS.DAGGER_SELL_PRICE}.`;
+  } else if (item === ITEMS.BOMB) {
+    myGame.hero.gold += SETTINGS.BOMB_SELL_PRICE;
+    message = `You sell a ${ITEMS.BOMB} for ${SETTINGS.BOMB_SELL_PRICE}.`;
+  } else if (item === ITEMS.HSWORD) {
+    myGame.hero.gold += SETTINGS.HSWORD_SELL_PRICE;
+    message = `You sell a ${ITEMS.HSWORD} for ${SETTINGS.HSWORD_SELL_PRICE}.`;
+  }
+
+  myGame.inventory.splice(itemIndex, 1);
+
+  res.json({
+    success: true,
+    itemUsed: item,
+    goldLeft: myGame.hero.gold,
+    inventory: myGame.inventory,
+    message: message,
   });
 });
 

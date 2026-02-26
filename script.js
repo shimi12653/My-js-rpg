@@ -16,6 +16,7 @@ import {
   apiHit,
   apiBuyItem,
   apiFetchEnemies,
+  apiSellItem,
 } from "./network.js";
 
 const myBtn = document.querySelector("#attack-btn");
@@ -36,8 +37,10 @@ const heroHpBar = document.querySelector("#hero-hp-bar");
 const heroWeapons = document.querySelector("#hero-weapons");
 const goldBalance = document.querySelector("#gold-balance");
 const buyHSwordBtn = document.querySelector("#but-heavy-sword-btn");
+const sellBtn = document.querySelector("#sell-mode-btn");
 
 let regenTimer; // Таймер регена врага на 5% от макс хп
+let isSellMode = false; // Состояние для продажи вещей
 
 const game = new Game();
 
@@ -95,67 +98,91 @@ const renderInventory = () => {
         return;
       }
 
-      try {
-        const data = await apiUseItem(index);
+      if (isSellMode) {
+        try {
+          const data = await apiSellItem(index); // Вызываем апи по индексу предмета
 
-        if (data.success) {
-          game.inventory.length = 0;
-          game.inventory.push(...data.inventory);
+          if (data.success) {
+            game.inventory.length = 0;
+            game.inventory.push(...data.inventory);
 
-          game.hero.hp = data.heroStats.hp;
-          game.hero.maxHp = data.heroStats.maxHp;
-          game.hero.damage = data.heroStats.damage;
-          game.hero.gold = data.heroStats.gold;
-          game.hero.equippedWeapons = data.heroStats.equippedWeapons;
-          game.currentEnemy.hp = data.enemyHpLeft;
+            game.hero.gold = data.goldLeft;
 
-          logMessage(
-            `Server: ${data.message}`,
-            data.itemUsed === ITEMS.BOMB ? "red" : "purple",
-          );
+            logMessage(`Server: ${data.message}`, "#00de1a");
 
-          if (data.itemUsed === ITEMS.BOMB) {
-            if (data.isEnemyDead) {
-              handleVictory();
-            } else {
-              game.isProccessingTurn = true;
-              toggleControls(true);
-
-              setTimeout(async () => {
-                await enemyAttack();
-                game.isProccessingTurn = false;
-
-                if (
-                  game.state === GAME_STATE.PLAYING ||
-                  game.state === GAME_STATE.VICTORY
-                ) {
-                  toggleControls(false);
-                  if (game.state === GAME_STATE.VICTORY) myBtn.disabled = true;
-                } else {
-                  toggleControls(false);
-                  myBtn.disabled = true;
-                  buyBtn.disabled = true;
-                }
-                saveGame();
-              }, SETTINGS.ENEMY_TURN_DELAY);
-            }
+            renderInventory();
+            updateHeroUI();
+            await saveGame();
+          } else {
+            logMessage(data.message, "red");
           }
-
-          updateHeroUI();
-          renderInventory();
-
-          mySpan.innerText = game.currentEnemy.hp;
-          const barWidth =
-            (game.currentEnemy.hp / (game.currentEnemy.maxHp * game.level)) *
-            100;
-          myHpBar.style.width = `${barWidth}%`;
-
-          if (data.itemUsed !== ITEMS.BOMB) saveGame();
-        } else {
-          logMessage(data.message, "red");
+        } catch (e) {
+          console.error("Failed to sell item: ", e);
         }
-      } catch (e) {
-        console.error("Failed to use item on server: ", e);
+      } else {
+        try {
+          const data = await apiUseItem(index);
+
+          if (data.success) {
+            game.inventory.length = 0;
+            game.inventory.push(...data.inventory);
+
+            game.hero.hp = data.heroStats.hp;
+            game.hero.maxHp = data.heroStats.maxHp;
+            game.hero.damage = data.heroStats.damage;
+            game.hero.gold = data.heroStats.gold;
+            game.hero.equippedWeapons = data.heroStats.equippedWeapons;
+            game.currentEnemy.hp = data.enemyHpLeft;
+
+            logMessage(
+              `Server: ${data.message}`,
+              data.itemUsed === ITEMS.BOMB ? "red" : "purple",
+            );
+
+            if (data.itemUsed === ITEMS.BOMB) {
+              if (data.isEnemyDead) {
+                handleVictory();
+              } else {
+                game.isProccessingTurn = true;
+                toggleControls(true);
+
+                setTimeout(async () => {
+                  await enemyAttack();
+                  game.isProccessingTurn = false;
+
+                  if (
+                    game.state === GAME_STATE.PLAYING ||
+                    game.state === GAME_STATE.VICTORY
+                  ) {
+                    toggleControls(false);
+                    if (game.state === GAME_STATE.VICTORY)
+                      myBtn.disabled = true;
+                  } else {
+                    toggleControls(false);
+                    myBtn.disabled = true;
+                    buyBtn.disabled = true;
+                  }
+                  saveGame();
+                }, SETTINGS.ENEMY_TURN_DELAY);
+              }
+            }
+
+            updateHeroUI();
+            renderInventory();
+
+            mySpan.innerText = game.currentEnemy.hp;
+            const barWidth =
+              (game.currentEnemy.hp / (game.currentEnemy.maxHp * game.level)) *
+              100;
+            myHpBar.style.width = `${barWidth}%`;
+
+            if (data.itemUsed !== ITEMS.BOMB) saveGame();
+          } else {
+            logMessage(data.message, "red");
+          }
+        } catch (e) {
+          console.error("Failed to use item on server: ", e);
+        }
       }
     });
     myUl.appendChild(newLi);
@@ -429,7 +456,9 @@ myBtn.addEventListener("click", async () => {
 });
 
 myRestart.addEventListener("click", initGame);
+
 myResStat.addEventListener("click", resetProgress);
+
 buyHSwordBtn.addEventListener("click", async () => {
   if (game.state !== GAME_STATE.PLAYING && game.state !== GAME_STATE.VICTORY)
     return;
@@ -482,6 +511,18 @@ buyBtn.addEventListener("click", async () => {
     }
   } catch (e) {
     console.error("Shop is closed (Server unavailable): ", e);
+  }
+});
+
+sellBtn.addEventListener("click", () => {
+  isSellMode = !isSellMode;
+
+  if (isSellMode) {
+    sellBtn.innerText = "Sell Mode: ON";
+    sellBtn.style.backgroundColor = "#00de1a";
+  } else {
+    sellBtn.innerText = "Sell Mode: OFF";
+    sellBtn.style.backgroundColor = "";
   }
 });
 

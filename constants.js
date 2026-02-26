@@ -25,11 +25,15 @@ export const SETTINGS = {
   ENEMY_REGEN_PERCENT: 0.05,
   ENEMY_TURN_DELAY: 1000,
 
-  // items
+  // items (cost)
   GOLD_DROP: 50, // Имеется ввиду сколько золото с лута приносит
   BOMB_COST: 100,
   STARTING_GOLD: 1000,
   HSWORD_COST: 200,
+  DAGGER_SELL_PRICE: 15,
+  POTION_SELL_PRICE: 10,
+  BOMB_SELL_PRICE: 25,
+  HSWORD_SELL_PRICE: 50,
 
   // progression
   LEVEL_UP_HP: 20,

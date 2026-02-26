@@ -124,6 +124,16 @@ export const apiBuyItem = async (item) => {
   }
 };
 
+export const apiSellItem = async (index) => {
+  try {
+    const response = await fetch(`${BASE_URL}/sell-item?index=${index}`);
+    return await response.json();
+  } catch (e) {
+    console.error("Network Error (sell-item): ", e);
+    throw e;
+  }
+};
+
 export const apiFetchEnemies = () => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {

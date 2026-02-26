@@ -1,23 +1,12 @@
 {
-  "level": 2,
-  "inventory": [
-    "Bomb",
-    "Rusty Dagger",
-    "Heavy Sword",
-    "Heavy Sword"
-  ],
+  "level": 1,
+  "inventory": [],
   "heroStats": {
-    "hp": 120,
-    "maxHp": 120,
-    "damage": 22,
-    "gold": 450,
-    "equippedWeapons": 2,
-    "weapons": [
-      {
-        "name": "Heavy sword",
-        "baseDamage": 15,
-        "handsRequired": 2
-      }
-    ]
+    "hp": 100,
+    "maxHp": 100,
+    "damage": 5,
+    "gold": 1100,
+    "equippedWeapons": 0,
+    "weapons": []
   }
 }
