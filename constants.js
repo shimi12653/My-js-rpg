@@ -10,6 +10,7 @@ export const ITEMS = {
   DAGGER: "Rusty Dagger",
   GOLD: "Gold",
   HSWORD: "Heavy Sword",
+  STAFF: "Fire Staff",
 };
 
 export const SETTINGS = {
@@ -30,10 +31,12 @@ export const SETTINGS = {
   BOMB_COST: 100,
   STARTING_GOLD: 1000,
   HSWORD_COST: 200,
+  STAFF_COST: 300,
   DAGGER_SELL_PRICE: 15,
   POTION_SELL_PRICE: 10,
   BOMB_SELL_PRICE: 25,
   HSWORD_SELL_PRICE: 50,
+  STAFF_SELL_PRICE: 100,
 
   // progression
   LEVEL_UP_HP: 20,

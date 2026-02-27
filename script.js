@@ -268,10 +268,28 @@ const enemyAttack = async () => {
     game.hero.hp = data.heroHpLeft;
     updateHeroUI();
 
-    logMessage(
-      `Enemy hits you for ${data.damageDealt} damage! (Crit level: ${data.critLevel}x)`,
-      "red",
-    );
+    if (data.burnMessage) {
+      logMessage(data.burnMessage, "orange");
+
+      game.currentEnemy.hp = data.enemyHpLeft;
+
+      mySpan.innerText = game.currentEnemy.hp;
+      const barWidth =
+        (game.currentEnemy.hp / (game.currentEnemy.maxHp * game.level)) * 100;
+      myHpBar.style.width = `${Math.max(0, barWidth)}%`;
+    }
+
+    if (data.isEnemyDead) {
+      // Вывод в лог если враг умер
+      logMessage(data.message, "purple");
+      handleVictory();
+      return;
+    } else {
+      logMessage(
+        `Enemy hits you for ${data.damageDealt} damage! (Crit level: ${data.critLevel}x)`,
+        "red",
+      );
+    }
 
     if (game.hero.hp <= 0) {
       game.hero.hp = 0;

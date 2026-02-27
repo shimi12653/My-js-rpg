@@ -5,6 +5,9 @@ export class Enemy {
     this.maxHp = hp;
     this.damage = damage;
     this.img = img;
+
+    this.burnTurns = 0;
+    this.burnDamage = 5;
   }
 
   takeDamage(amount) {

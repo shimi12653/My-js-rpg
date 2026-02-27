@@ -6,8 +6,8 @@ import fs from "fs";
 import { Game } from "./Game.js"; // 1. Импортируем нашу игру
 import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с null
 import { ITEMS, SETTINGS } from "./constants.js";
-import { Weapon, Dagger, HSword } from "./weapon.js";
-import { postMessageToThread } from "worker_threads";
+import { Weapon, Dagger, HSword, FireStaff } from "./weapon.js";
+import { measureMemory } from "vm";
 
 const app = express();
 const PORT = 3000;
@@ -116,6 +116,26 @@ app.get("/generate-loot", (req, res) => {
 
 // метод атаки (враг и герой)
 app.get("/enemy-attack", (req, res) => {
+  let burnMessage = "";
+
+  if (myGame.currentEnemy.burnTurns > 0) {
+    myGame.currentEnemy.takeDamage(myGame.currentEnemy.burnDamage);
+    myGame.currentEnemy.burnTurns--;
+    burnMessage = `Enemy burns for ${myGame.currentEnemy.burnDamage} damage! Enemy will take damage ${myGame.currentEnemy.burnTurns} turns more.`;
+  }
+
+  if (myGame.currentEnemy.hp <= 0) {
+    return res.json({
+      message: "The enemy was burned before it could strike you.",
+      damageDealt: 0,
+      heroHpLeft: myGame.hero.hp,
+      enemyHpLeft: 0,
+      critLevel: "0.0",
+      burnMessage: burnMessage,
+      isEnemyDead: true, // Для фронта, чтобы та часть игры знала, что враг умер
+    });
+  }
+
   const currentLevel = parseInt(req.query.level) || 1;
 
   const ENEMY_LEVEL_MULTI = 0.2;
@@ -126,10 +146,12 @@ app.get("/enemy-attack", (req, res) => {
   myGame.hero.takeDamage(scaledDamage);
 
   res.json({
-    message: "Враг нанес ответный удар!",
+    message: "The enemy has struck back!",
     damageDealt: scaledDamage,
     heroHpLeft: myGame.hero.hp,
+    enemyHpLeft: myGame.currentEnemy.hp,
     critLevel: levelMultiplier.toFixed(1),
+    burnMessage: burnMessage,
   });
 });
 
@@ -156,6 +178,10 @@ app.get("/hit", (req, res) => {
     const hitResult = wpn.calcDamage();
 
     totalDamage += hitResult.damage;
+
+    if (hitResult.effect === "burn") {
+      myGame.currentEnemy.burnTurns = 4;
+    }
 
     if (hitResult.isCrit) {
       isAnyCrit = true;
@@ -277,6 +303,23 @@ app.get("/buy-item", (req, res) => {
         message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
       });
     }
+  } else if (itemToBuy === ITEMS.STAFF) {
+    if (myGame.hero.gold >= SETTINGS.STAFF_COST) {
+      myGame.hero.gold -= SETTINGS.STAFF_COST;
+      myGame.inventory.push(ITEMS.STAFF);
+
+      res.json({
+        success: true,
+        message: `You bought a ${ITEMS.STAFF} for ${SETTINGS.STAFF_COST} gold.`,
+        goldLeft: myGame.hero.gold,
+        inventory: myGame.inventory,
+      });
+    } else {
+      res.json({
+        success: false,
+        message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
+      });
+    }
   } else {
     res.json({
       success: false,
@@ -356,6 +399,17 @@ app.get("/use-item", (req, res) => {
   } else if (item === ITEMS.GOLD) {
     myGame.hero.gold += SETTINGS.GOLD_DROP;
     message = `You used a bad of Gold! +${SETTINGS.GOLD_DROP} coins.`;
+  } else if (item === ITEMS.STAFF) {
+    const isEquipped = myGame.hero.equipWeapon(new FireStaff());
+
+    if (!isEquipped) {
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    }
+
+    message = `You equipped ${ITEMS.STAFF}.`;
   }
 
   myGame.inventory.splice(itemIndex, 1);
@@ -401,6 +455,9 @@ app.get("/sell-item", (req, res) => {
   } else if (item === ITEMS.HSWORD) {
     myGame.hero.gold += SETTINGS.HSWORD_SELL_PRICE;
     message = `You sell a ${ITEMS.HSWORD} for ${SETTINGS.HSWORD_SELL_PRICE}.`;
+  } else if (item === ITEMS.STAFF) {
+    myGame.hero.gold += SETTINGS.STAFF_SELL_PRICE;
+    message = `You sell a ${ITEMS.STAFF} for ${SETTINGS.STAFF_SELL_PRICE}.`;
   }
 
   myGame.inventory.splice(itemIndex, 1);
