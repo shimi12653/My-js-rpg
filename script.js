@@ -38,11 +38,20 @@ const heroWeapons = document.querySelector("#hero-weapons");
 const goldBalance = document.querySelector("#gold-balance");
 const buyHSwordBtn = document.querySelector("#but-heavy-sword-btn");
 const sellBtn = document.querySelector("#sell-mode-btn");
+const shopList = document.querySelector("#shop-list");
+
 
 let regenTimer; // Таймер регена врага на 5% от макс хп
 let isSellMode = false; // Состояние для продажи вещей
 
 const game = new Game();
+
+// Массив товаров в магазине
+const shopItems = [
+  { name: ITEMS.BOMB, price: SETTINGS.BOMB_COST },
+  { name: ITEMS.HSWORD, price: SETTINGS.HSWORD_COST },
+  { name: ITEMS.STAFF, price: SETTINGS.STAFF_COST },
+];
 
 // Обая функция логов
 const logMessage = (text, color = "black", fontWeight = "normal") => {
@@ -71,6 +80,48 @@ const updateHeroUI = () => {
 
   const hpPercent = Math.max(0, (game.hero.hp / game.hero.maxHp) * 100);
   heroHpBar.style.width = `${hpPercent}%`;
+};
+
+// Функция рендера магазина
+const renderShop = () => {
+  shopList.innerHTML = "";
+
+  shopItems.forEach((shopItem) => {
+    const newLi = document.createElement("li");
+    newLi.innerText = `${shopItem.name}. Price: ${shopItem.price} gold`;
+    newLi.style.cursor = "pointer";
+    
+    newLi.addEventListener("click", async () => {
+      if (game.isProccessingTurn) {
+        console.log("Enemy is atttacking. BE READY!");
+        return;
+      }
+
+      if (game.state !== GAME_STATE.PLAYING && game.state !== GAME_STATE.VICTORY) {
+        console.log("Game is over, you cannot do anything with shop.");
+        return;
+      }
+
+      try {
+        const data = await apiBuyItem(shopItem.name);
+
+        if (data.success) {
+          game.hero.gold = data.goldLeft;
+          game.inventory.length = 0;
+          game.inventory.push(...data.inventory);
+          logMessage(`Server: ${data.message}`, "purple");
+          renderInventory();
+          updateHeroUI();
+          await saveGame();
+        } else {
+          logMessage(data.message, "red");
+        }
+      } catch (e) {
+        console.error('Failed to buy item: ', e)
+      }
+    });
+    shopList.appendChild(newLi);
+  });
 };
 
 // --- ФУНКЦИЯ ИНВЕНТАРЯ ---
@@ -369,42 +420,24 @@ const initGame = async () => {
   enemyImg.src = game.currentEnemy.img;
   heroHp.innerText = game.hero.hp;
 
-  clearInterval(regenTimer);
-
-  regenTimer = setInterval(() => {
-    const currentMaxHp = game.currentEnemy.maxHp * game.level;
-
-    if (game.currentEnemy.hp > 0 && game.currentEnemy.hp < currentMaxHp) {
-      game.currentEnemy.hp += Math.floor(
-        currentMaxHp * SETTINGS.ENEMY_REGEN_PERCENT,
-      );
-
-      if (game.currentEnemy.hp > currentMaxHp)
-        game.currentEnemy.hp = currentMaxHp;
-      // Обновляем HTML после лечения
-      mySpan.innerText = game.currentEnemy.hp;
-      const barWidth = (game.currentEnemy.hp / currentMaxHp) * 100;
-      myHpBar.style.width = `${barWidth}%`;
-    }
-  }, 3000);
-
   renderInventory();
+  renderShop();
 };
 
 // Функция для блокировки интерфейса кнопок
 const toggleControls = (isDisabled) => {
   myBtn.disabled = isDisabled;
-  buyBtn.disabled = isDisabled;
   enemySelect.disabled = isDisabled;
   myResStat.disabled = isDisabled;
   myRestart.disabled = isDisabled;
-  buyHSwordBtn.disabled = isDisabled;
+  sellBtn.disabled = isDisabled;
+  shopList.disabled = isDisabled;
 
   myBtn.style.color = isDisabled ? "#BBB" : "";
-  buyBtn.style.color = isDisabled ? "#BBB" : "";
   myResStat.style.color = isDisabled ? "#BBB" : "";
   myRestart.style.color = isDisabled ? "#BBB" : "";
-  buyHSwordBtn.style.color = isDisabled ? "#BBB" : "";
+  sellBtn.style.color = isDisabled ? "#BBB" : "";
+  shopList.style.color = isDisabled ? "#BBB" : "";
 };
 
 myBtn.addEventListener("click", async () => {
@@ -476,61 +509,6 @@ myBtn.addEventListener("click", async () => {
 myRestart.addEventListener("click", initGame);
 
 myResStat.addEventListener("click", resetProgress);
-
-buyHSwordBtn.addEventListener("click", async () => {
-  if (game.state !== GAME_STATE.PLAYING && game.state !== GAME_STATE.VICTORY)
-    return;
-
-  try {
-    const data = await apiBuyItem(ITEMS.HSWORD);
-
-    if (data.success) {
-      game.hero.gold = data.goldLeft;
-      game.inventory.length = 0;
-      game.inventory.push(...data.inventory);
-
-      renderInventory();
-      updateHeroUI();
-      logMessage(
-        `Server: ${data.message}. Balance: ${game.hero.gold}.`,
-        "purple",
-      );
-      saveGame();
-    } else {
-      logMessage(`Server: ${data.message}.`, "purple");
-    }
-  } catch (e) {
-    console.error("Shop is closed: ", e);
-  }
-});
-
-buyBtn.addEventListener("click", async () => {
-  if (game.state !== GAME_STATE.PLAYING && game.state !== GAME_STATE.VICTORY) {
-    console.log("Game is over, you cannot do anything with your inventory.");
-    return;
-  }
-
-  try {
-    const data = await apiBuyItem(ITEMS.BOMB);
-
-    if (data.success) {
-      game.hero.gold = data.goldLeft;
-      game.inventory.length = 0;
-      game.inventory.push(...data.inventory);
-
-      renderInventory();
-      logMessage(
-        `Server: ${data.message}. Balance: ${game.hero.gold}`,
-        "purple",
-      );
-      saveGame();
-    } else {
-      logMessage(`Server: ${data.message}`, "purple");
-    }
-  } catch (e) {
-    console.error("Shop is closed (Server unavailable): ", e);
-  }
-});
 
 sellBtn.addEventListener("click", () => {
   isSellMode = !isSellMode;

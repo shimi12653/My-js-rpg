@@ -7,7 +7,6 @@ import { Game } from "./Game.js"; // 1. Импортируем нашу игру
 import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с null
 import { ITEMS, SETTINGS } from "./constants.js";
 import { Weapon, Dagger, HSword, FireStaff } from "./weapon.js";
-import { measureMemory } from "vm";
 
 const app = express();
 const PORT = 3000;
