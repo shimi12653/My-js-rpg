@@ -38,15 +38,7 @@
             <h3>Gold: <span id="gold-balance">0</span></h3>
           </div>
 
-          <div
-          style="
-            border: 2px solid black;
-            width: 200px;
-            height: 30px;
-            background-color: #ddd;
-          "
-          >
-          </div>
+          <div class="hp-bar-container">
           <div
             id="hero-hp-bar"
             style="
@@ -57,13 +49,17 @@
             "
           >
           </div>
+          </div>
 
-          <h3>Inventory:</h3>
-          <h3>Shop</h3>
+          <hr style="border: 1px solid #4a0000; margin: 20px 0;"> 
+            <h3>Shop:</h3>
           <ul id="shop-list"></ul>
-          <button id="sell-mode-btn">Sell Mode: OFF</button>
+
+          <hr style="border: 1px solid #4a0000; margin: 20px 0;"> <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0;">Inventory</h3>
+            <button id="sell-mode-btn" style="margin: 0;">Sell Mode: OFF</button>
+          </div>
           <ul id="inventory-list"></ul>
-        
         </div>
 
         <div class="arena-panel">
@@ -88,14 +84,8 @@
 
           <h2>Enemy HP: <span id="enemy-hp">100</span></h2>
           <div
-            style="
-              border: 2px solid black;
-              width: 200px;
-              height: 30px;
-              background-color: #ddd;
-            "
+            class="hp-bar-container"
           > 
-          </div>
           <div
             id="hp-bar"
             style="
@@ -105,6 +95,7 @@
               transition: width 0.3s;
             "
           >
+          </div>
           </div>
             
           <button id="attack-btn">ATTACK!</button>

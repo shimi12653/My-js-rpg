@@ -515,10 +515,14 @@ sellBtn.addEventListener("click", () => {
 
   if (isSellMode) {
     sellBtn.innerText = "Sell Mode: ON";
-    sellBtn.style.backgroundColor = "#00de1a";
+    sellBtn.style.backgroundColor = "#b8860b";
+    sellBtn.style.color = "#ffffff";
+    myUl.classList.add("sell-mode-active");
   } else {
     sellBtn.innerText = "Sell Mode: OFF";
     sellBtn.style.backgroundColor = "";
+    sellBtn.style.color = "";
+    myUl.classList.remove("sell-mode-active");
   }
 });
 
