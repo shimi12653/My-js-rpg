@@ -9,6 +9,8 @@ export class Hero {
     this.hp = 100;
     this.maxHp = SETTINGS.HERO_MAX_HP;
     this.weapons = []; // Массив для счёта оружия
+    this.mana = SETTINGS.HERO_MAX_MANA;
+    this.maxMana = SETTINGS.HERO_MAX_MANA;
   }
 
   takeDamage(amount) {

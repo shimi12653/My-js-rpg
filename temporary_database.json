@@ -9,9 +9,16 @@
   "heroStats": {
     "hp": 100,
     "maxHp": 100,
-    "damage": 5,
-    "gold": 1000,
-    "equippedWeapons": 0,
-    "weapons": []
+    "damage": 13,
+    "gold": 700,
+    "equippedWeapons": 2,
+    "weapons": [
+      {
+        "name": "Fire Staff",
+        "baseDamage": 8,
+        "handsRequired": 2,
+        "burnChance": 0.4
+      }
+    ]
   }
 }

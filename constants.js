@@ -20,6 +20,7 @@ export const SETTINGS = {
   CRIT_CHANCE: 0.2,
   WEAPON_DAMAGE: 5,
   MAX_HANDS: 2,
+  HERO_MAX_MANA: 50,
 
   // fight
   BOMB_DAMAGE: 50,
@@ -37,6 +38,7 @@ export const SETTINGS = {
   BOMB_SELL_PRICE: 25,
   HSWORD_SELL_PRICE: 50,
   STAFF_SELL_PRICE: 100,
+  STAFF_MANA_COST: 15,
 
   // progression
   LEVEL_UP_HP: 20,
