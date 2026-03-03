@@ -19,7 +19,13 @@ export class Game {
     this.hero = new Hero();
 
     this.inventory = [];
-    this.inventory.push(ITEMS.POTION, ITEMS.BOMB, ITEMS.GOLD, ITEMS.DAGGER);
+    this.inventory.push(
+      ITEMS.POTION,
+      ITEMS.BOMB,
+      ITEMS.GOLD,
+      ITEMS.DAGGER,
+      ITEMS.MANA_POTION,
+    );
 
     this.state = GAME_STATE.PLAYING;
     this.isProccessingTurn = false;

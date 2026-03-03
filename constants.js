@@ -11,6 +11,7 @@ export const ITEMS = {
   GOLD: "Gold",
   HSWORD: "Heavy Sword",
   STAFF: "Fire Staff",
+  MANA_POTION: "Mana Potion",
 };
 
 export const SETTINGS = {
@@ -34,11 +35,15 @@ export const SETTINGS = {
   HSWORD_COST: 200,
   STAFF_COST: 300,
   DAGGER_SELL_PRICE: 15,
+  POTION_COST: 50,
   POTION_SELL_PRICE: 10,
   BOMB_SELL_PRICE: 25,
   HSWORD_SELL_PRICE: 50,
   STAFF_SELL_PRICE: 100,
   STAFF_MANA_COST: 15,
+  MANA_RESTORE_COST: 25,
+  MANA_POTION_COST: 50,
+  MANA_POTION_SELL_PRICE: 10,
 
   // progression
   LEVEL_UP_HP: 20,

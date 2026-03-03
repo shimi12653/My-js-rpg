@@ -241,6 +241,7 @@ app.get("/reset-hero", (req, res) => {
   myGame.hero.damage = 5;
   myGame.hero.equippedWeapons = 0;
   myGame.hero.gold = 0;
+  myGame.hero.mana = SETTINGS.HERO_MAX_MANA;
   myGame.hero.weapons = []; // Очищаем массив при ресете
 
   res.json({
@@ -334,6 +335,40 @@ app.get("/buy-item", (req, res) => {
         message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
       });
     }
+  } else if (itemToBuy === ITEMS.POTION) {
+    if (myGame.hero.gold >= SETTINGS.POTION_COST) {
+      myGame.hero.gold -= SETTINGS.POTION_COST;
+      myGame.inventory.push(ITEMS.POTION);
+
+      res.json({
+        success: true,
+        message: `You bought a ${ITEMS.POTION} for ${SETTINGS.POTION_COST} gold.`,
+        goldLeft: myGame.hero.gold,
+        inventory: myGame.inventory,
+      });
+    } else {
+      res.json({
+        success: false,
+        message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
+      });
+    }
+  } else if (itemToBuy === ITEMS.MANA_POTION) {
+    if (myGame.hero.gold >= SETTINGS.MANA_POTION_COST) {
+      myGame.hero.gold -= SETTINGS.MANA_POTION_COST;
+      myGame.inventory.push(ITEMS.MANA_POTION);
+
+      res.json({
+        success: true,
+        message: `You bought a ${ITEMS.MANA_POTION} for ${SETTINGS.MANA_POTION_COST} gold.`,
+        goldLeft: myGame.hero.gold,
+        inventory: myGame.inventory,
+      });
+    } else {
+      res.json({
+        success: false,
+        message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
+      });
+    }
   } else {
     res.json({
       success: false,
@@ -371,7 +406,7 @@ app.get("/use-item", (req, res) => {
 
     myGame.hero.hp += SETTINGS.HEAL_AMOUNT;
     if (myGame.hero.hp >= myGame.hero.maxHp) myGame.hero.hp = myGame.hero.maxHp;
-    message = `You used a healing pation! +${SETTINGS.HEAL_AMOUNT} HP.`;
+    message = `You used a ${ITEMS.POTION}! +${SETTINGS.HEAL_AMOUNT} HP.`;
   } else if (item === ITEMS.DAGGER) {
     const isEquipped = myGame.hero.equipWeapon(new Dagger());
 
@@ -424,6 +459,18 @@ app.get("/use-item", (req, res) => {
     }
 
     message = `You equipped ${ITEMS.STAFF}.`;
+  } else if (item === ITEMS.MANA_POTION) {
+    if (myGame.hero.hp <= 0) {
+      return res.json({
+        success: false,
+        message: `You are dead. You can't do anything.`,
+      });
+    }
+
+    myGame.hero.mana += SETTINGS.MANA_RESTORE_COST;
+    if (myGame.hero.mana >= myGame.hero.maxMana)
+      myGame.hero.mana = myGame.hero.maxMana;
+    message = `You used a ${ITEMS.MANA_POTION}. +${SETTINGS.MANA_RESTORE_COST} MP.`;
   }
 
   myGame.inventory.splice(itemIndex, 1);
@@ -472,6 +519,9 @@ app.get("/sell-item", (req, res) => {
   } else if (item === ITEMS.STAFF) {
     myGame.hero.gold += SETTINGS.STAFF_SELL_PRICE;
     message = `You sell a ${ITEMS.STAFF} for ${SETTINGS.STAFF_SELL_PRICE}.`;
+  } else if (item === ITEMS.MANA_POTION) {
+    myGame.hero.gold += SETTINGS.MANA_POTION_SELL_PRICE;
+    message = `You sell a ${ITEMS.MANA_POTION} for ${SETTINGS.MANA_POTION_SELL_PRICE}.`;
   }
 
   myGame.inventory.splice(itemIndex, 1);

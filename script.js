@@ -51,6 +51,8 @@ const shopItems = [
   { name: ITEMS.BOMB, price: SETTINGS.BOMB_COST },
   { name: ITEMS.HSWORD, price: SETTINGS.HSWORD_COST },
   { name: ITEMS.STAFF, price: SETTINGS.STAFF_COST },
+  { name: ITEMS.MANA_POTION, price: SETTINGS.MANA_POTION_COST },
+  { name: ITEMS.POTION, price: SETTINGS.POTION_COST },
 ];
 
 // Обая функция логов
@@ -189,6 +191,7 @@ const renderInventory = () => {
             game.hero.maxHp = data.heroStats.maxHp;
             game.hero.damage = data.heroStats.damage;
             game.hero.gold = data.heroStats.gold;
+            game.hero.mana = data.heroStats.mana;
             game.hero.equippedWeapons = data.heroStats.equippedWeapons;
             game.currentEnemy.hp = data.enemyHpLeft;
 

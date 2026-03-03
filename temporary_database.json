@@ -1,23 +1,18 @@
 {
-  "level": 2,
+  "level": 1,
   "inventory": [
     "Healing Potion",
-    "Bomb",
-    "Rusty Dagger"
+    "Gold",
+    "Rusty Dagger",
+    "Mana Potion",
+    "Mana Potion"
   ],
   "heroStats": {
-    "hp": 120,
-    "maxHp": 120,
-    "damage": 15,
-    "gold": 750,
-    "equippedWeapons": 2,
-    "weapons": [
-      {
-        "name": "Fire Staff",
-        "baseDamage": 8,
-        "handsRequired": 2,
-        "burnChance": 0.4
-      }
-    ]
+    "hp": 100,
+    "maxHp": 100,
+    "damage": 5,
+    "gold": 925,
+    "equippedWeapons": 0,
+    "weapons": []
   }
 }
