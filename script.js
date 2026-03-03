@@ -36,10 +36,10 @@ const heroHp = document.querySelector("#hero-hp");
 const heroHpBar = document.querySelector("#hero-hp-bar");
 const heroWeapons = document.querySelector("#hero-weapons");
 const goldBalance = document.querySelector("#gold-balance");
-const buyHSwordBtn = document.querySelector("#but-heavy-sword-btn");
 const sellBtn = document.querySelector("#sell-mode-btn");
 const shopList = document.querySelector("#shop-list");
-
+const heroMp = document.querySelector("#hero-mp");
+const heroMpBar = document.querySelector("#hero-mp-bar");
 
 let regenTimer; // Таймер регена врага на 5% от макс хп
 let isSellMode = false; // Состояние для продажи вещей
@@ -73,6 +73,7 @@ const logMessage = (text, color = "black", fontWeight = "normal") => {
 // Жизни и бар хп героя
 const updateHeroUI = () => {
   heroHp.innerText = game.hero.hp;
+  heroMp.innerText = game.hero.mana;
 
   heroWeapons.innerText = `${game.hero.equippedWeapons}/${game.hero.maxHands}`;
 
@@ -80,6 +81,9 @@ const updateHeroUI = () => {
 
   const hpPercent = Math.max(0, (game.hero.hp / game.hero.maxHp) * 100);
   heroHpBar.style.width = `${hpPercent}%`;
+
+  const mpPercent = Math.max(0, (game.hero.mana / game.hero.maxMana) * 100);
+  heroMpBar.style.width = `${mpPercent}%`;
 };
 
 // Функция рендера магазина
@@ -90,14 +94,17 @@ const renderShop = () => {
     const newLi = document.createElement("li");
     newLi.innerText = `${shopItem.name}. Price: ${shopItem.price} gold`;
     newLi.style.cursor = "pointer";
-    
+
     newLi.addEventListener("click", async () => {
       if (game.isProccessingTurn) {
         console.log("Enemy is atttacking. BE READY!");
         return;
       }
 
-      if (game.state !== GAME_STATE.PLAYING && game.state !== GAME_STATE.VICTORY) {
+      if (
+        game.state !== GAME_STATE.PLAYING &&
+        game.state !== GAME_STATE.VICTORY
+      ) {
         console.log("Game is over, you cannot do anything with shop.");
         return;
       }
@@ -117,7 +124,7 @@ const renderShop = () => {
           logMessage(data.message, "red");
         }
       } catch (e) {
-        console.error('Failed to buy item: ', e)
+        console.error("Failed to buy item: ", e);
       }
     });
     shopList.appendChild(newLi);
@@ -446,8 +453,19 @@ myBtn.addEventListener("click", async () => {
   try {
     const data = await apiHit();
 
+    // Проверка пришло ли false
+    if (!data.success) {
+      logMessage(`Server: ${data.message}`, "red", "bold");
+      return;
+    }
+
+    // Проверка пришла ли мана
+    if (data.manaLeft !== undefined) {
+      game.hero.mana = data.manaLeft;
+    }
+
     logMessage(
-      `Server: ${data.message} (Damage: ${data.damageDealt}, Enemy HP: ${data.enemyHpLeft})`,
+      `Server: ${data.message} (Damage: ${data.damageDealt}, Enemy HP: ${data.enemyHpLeft}, Mana: ${data.manaLeft})`,
       "purple",
       "bold",
     );
@@ -500,10 +518,12 @@ myBtn.addEventListener("click", async () => {
         saveGame();
       }, SETTINGS.ENEMY_TURN_DELAY);
     }
+    updateHeroUI();
   } catch (e) {
     console.error(e);
     logMessage("Server unavailable. Play offline.", "red");
   }
+  updateHeroUI();
 });
 
 myRestart.addEventListener("click", initGame);

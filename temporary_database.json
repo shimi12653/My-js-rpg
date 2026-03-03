@@ -1,16 +1,15 @@
 {
-  "level": 1,
+  "level": 2,
   "inventory": [
     "Healing Potion",
     "Bomb",
-    "Gold",
     "Rusty Dagger"
   ],
   "heroStats": {
-    "hp": 100,
-    "maxHp": 100,
-    "damage": 13,
-    "gold": 700,
+    "hp": 120,
+    "maxHp": 120,
+    "damage": 15,
+    "gold": 750,
     "equippedWeapons": 2,
     "weapons": [
       {

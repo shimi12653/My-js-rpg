@@ -155,6 +155,20 @@ app.get("/enemy-attack", (req, res) => {
 });
 
 app.get("/hit", (req, res) => {
+  const hasStaff = myGame.hero.weapons.some((wpn) => wpn.name === "Fire Staff");
+
+  if (hasStaff) {
+    if (myGame.hero.mana >= SETTINGS.STAFF_MANA_COST) {
+      myGame.hero.mana -= SETTINGS.STAFF_MANA_COST;
+    } else {
+      return res.json({
+        success: false,
+        message: "Not enough mana to use Fire Staff.",
+        enemyHpLeft: myGame.currentEnemy.hp,
+      });
+    }
+  }
+
   let pureHeroDamage = myGame.hero.damage;
 
   for (const wpn of myGame.hero.weapons) {
@@ -193,6 +207,7 @@ app.get("/hit", (req, res) => {
     success: true,
     message: isAnyCrit ? "Critical hit!" : "Regular hit.",
     damageDealt: totalDamage,
+    manaLeft: myGame.hero.mana,
     isCrit: isAnyCrit,
     enemyHpLeft: myGame.currentEnemy.hp,
   });

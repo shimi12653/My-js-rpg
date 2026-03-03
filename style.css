@@ -1,129 +1,154 @@
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #0d0d0d;
-    color: #d9d9d9;
-    padding: 20px; /*это отступ внутри элемента (от рамки до самого текста). Он "распухляет" элемент изнутри.*/
-    margin: 0;  /*это отступ снаружи (от рамки до соседних элементов). Он расталкивает соседей.*/
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #0d0d0d;
+  color: #d9d9d9;
+  padding: 20px; /*это отступ внутри элемента (от рамки до самого текста). Он "распухляет" элемент изнутри.*/
+  margin: 0; /*это отступ снаружи (от рамки до соседних элементов). Он расталкивает соседей.*/
 }
 
-h1, h2, h3 { /*Обращение ко всем тегам h1, h2, h3 (Конкретно здесь) */
-    color: #ff4d4d;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-}
-
-.game-container { /*Обращение ко всему классу game-container*/
-    display: flex;
-    gap: 30px;
-    max-width: 1000px;
-    margin: 0 auto;
-}
-
-.hero-panel, .arena-panel {
-    flex: 1;
-    background-color: #1a1a1a;
-    border: 2px solid #6b0000;
-    border-radius: 8px;
-    padding: 25px;
-    box-shadow: 0 0 20px rgba(107, 0 ,0 , 0.2);
-}
-
-#hero-hp-bar { /*Обращение к определённому id*/
-    background-color: #cc0000;
-    height: 100%;
-    transition: width 0.4s ease-in-out;
-}
-
-#hp-bar {
-    background-color: #00aa00;
-    height: 100%;
-    transition: width 0.4s ease-in-out;
+h1,
+h2,
+h3 {
+  /*Обращение ко всем тегам h1, h2, h3 (Конкретно здесь) */
+  color: #ff4d4d;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
 }
 
 button {
-    background-color: #111111;
-    color: #d9d9d9;
-    border: 1px solid #4a0000;
-    padding: 10px 15px;
-    margin-right: 5px;
-    cursor: pointer;
-    font-family: 'Courier New', Courier, monospace;
-    text-transform: uppercase;
-    font-weight: bold;
-    transition: background-color 0.3s, transform 0.1s; /* Плавность анимации */
+  background-color: #111111;
+  color: #d9d9d9;
+  border: 1px solid #4a0000;
+  padding: 10px 15px;
+  margin-right: 5px;
+  cursor: pointer;
+  font-family: "Courier New", Courier, monospace;
+  text-transform: uppercase;
+  font-weight: bold;
+  transition:
+    background-color 0.3s,
+    transform 0.1s; /* Плавность анимации */
 }
 
 button:hover {
-    background-color: #4a0000;
-    color: #ffffff;
+  background-color: #4a0000;
+  color: #ffffff;
 }
 
 button:active {
-    transform: scale(0.95); /*Прожимается кнопка "внутрь"*/
-}
-
-#attack-btn {
-    background-color: #5e2727;
-    color: #ffffff;
-    border: 2px solid #ff1a1a;
-    font-size: 1.2rem;
-    width: 100%;
-    margin-bottom: 15px;
-    padding: 15px;
-}
-
-#attack-btn:hover {
-    background-color: #8b0000;
-    border-color: #ff4d4d;
-}
-
-#enemy-select {
-    background-color: #111111;
-    color: #d9d9d9;
-    border: 1px solid #4a0000;
-    padding: 5px;
-}
-
-#log {
-    color: #a6a6a6;
+  transform: scale(0.95); /*Прожимается кнопка "внутрь"*/
 }
 
 ul {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
 }
 
 li {
-    background-color: #111111;
-    border: 1px solid #4a0000;
-    padding: 12px;
-    margin-bottom: 8px;
-    border-radius: 4px;
-    color: #d9d9d9;
-    font-family: 'Courier New', Courier, monospace;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
+  background-color: #111111;
+  border: 1px solid #4a0000;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  color: #d9d9d9;
+  font-family: "Courier New", Courier, monospace;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 li:hover {
-    background-color: #330000;
-    border-color: #ff4d4d;
-    transform: translateX(10px);
+  background-color: #330000;
+  border-color: #ff4d4d;
+  transform: translateX(10px);
 }
 
 li:active {
-    transform: translateX(10px) scale(0.98);
+  transform: translateX(10px) scale(0.98);
+}
+
+.game-container {
+  /*Обращение ко всему классу game-container*/
+  display: flex;
+  gap: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.hero-panel,
+.arena-panel {
+  flex: 1;
+  background-color: #1a1a1a;
+  border: 2px solid #6b0000;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 0 20px rgba(107, 0, 0, 0.2);
 }
 
 .sell-mode-active li {
-    border-color: #b8860b;
-    background-color: #1a180b;
+  border-color: #b8860b;
+  background-color: #1a180b;
 }
 
 .sell-mode-active li:hover {
-    background-color: #332b00;
-    border-color: #ffd700;
-    transform: translateX(-10px);
+  background-color: #332b00;
+  border-color: #ffd700;
+  transform: translateX(-10px);
+}
+
+.hp-bar-container {
+  border: 2px solid #333;
+  width: 100%;
+  height: 25px;
+  background-color: #1a180b;
+  border-radius: 4px;
+  overflow: hidden; /*Для того, чтобы полоска не вылазила за границы из-за скругления рамки*/
+  margin-bottom: 15px;
+}
+
+#hero-hp-bar {
+  /*Обращение к определённому id*/
+  background-color: #cc0000;
+  height: 100%;
+  transition: width 0.4s ease-in-out;
+}
+
+#hero-mp-bar {
+  background-color: #0055ff;
+  height: 100%;
+  transition: width 0.4s ease-in-out;
+  /* transition - что будет делать полоску, куда убывать, с какой скоростью (в секундах) и в какую сторону */
+}
+
+#hp-bar {
+  background-color: #00aa00;
+  height: 100%;
+  transition: width 0.4s ease-in-out;
+}
+
+#attack-btn {
+  background-color: #5e2727;
+  color: #ffffff;
+  border: 2px solid #ff1a1a;
+  font-size: 1.2rem;
+  width: 100%;
+  margin-bottom: 15px;
+  padding: 15px;
+}
+
+#attack-btn:hover {
+  background-color: #8b0000;
+  border-color: #ff4d4d;
+}
+
+#enemy-select {
+  background-color: #111111;
+  color: #d9d9d9;
+  border: 1px solid #4a0000;
+  padding: 5px;
+}
+
+#log {
+  color: #a6a6a6;
 }
