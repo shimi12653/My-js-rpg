@@ -12,6 +12,8 @@ export const ITEMS = {
   HSWORD: "Heavy Sword",
   STAFF: "Fire Staff",
   MANA_POTION: "Mana Potion",
+  SCYTHE: "Iron Scythe",
+  DUAL_SWORDS: "Dual Daggers",
 };
 
 export const SETTINGS = {
@@ -44,6 +46,10 @@ export const SETTINGS = {
   MANA_RESTORE_COST: 25,
   MANA_POTION_COST: 50,
   MANA_POTION_SELL_PRICE: 10,
+  SCYTHE_COST: 400,
+  SCYTHE_SELL_PRICE: 80,
+  DUAL_SWORDS_COST: 350,
+  DUAL_SWORDS_SELL_PRICE: 70,
 
   // progression
   LEVEL_UP_HP: 20,

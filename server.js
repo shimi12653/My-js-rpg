@@ -6,7 +6,14 @@ import fs from "fs";
 import { Game } from "./Game.js"; // 1. Импортируем нашу игру
 import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с null
 import { ITEMS, SETTINGS } from "./constants.js";
-import { Weapon, Dagger, HSword, FireStaff } from "./weapon.js";
+import {
+  Weapon,
+  Dagger,
+  HSword,
+  FireStaff,
+  Scythe,
+  DualDaggers,
+} from "./weapon.js";
 
 const app = express();
 const PORT = 3000;
@@ -41,17 +48,23 @@ if (fs.existsSync(DB)) {
     // Тут происходит приведение текста в массив оружия
     if (savedData.heroStats?.weapons) {
       myGame.hero.weapons = savedData.heroStats.weapons.map((savedWeapon) => {
-        if (savedWeapon.name === "Rusty dagger") {
+        if (savedWeapon.name === "Rusty Dagger") {
           // если название сохранённого оружия - 'Rusty dagger' ...
           return new Dagger(); // Возвращается класс Dagger
-        } else if (savedWeapon.name === "Heavy sword") {
+        } else if (savedWeapon.name === "Heavy Sword") {
           return new HSword(); // Также и с Heavy sword
+        } else if (savedWeapon.name === "Fire Staff") {
+          return new FireStaff();
+        } else if (savedWeapon.name === "Dual Daggers") {
+          return new DualDaggers();
+        } else if (savedWeapon.name === "Iron Scythe") {
+          return new Scythe();
         } else {
           // И с любым другим видом оружия
           return new Weapon(
             savedWeapon.name,
             savedWeapon.baseDamage,
-            savedData.handsRequired,
+            savedWeapon.handsRequired,
           );
         }
       });
@@ -171,6 +184,7 @@ app.get("/hit", (req, res) => {
 
   let pureHeroDamage = myGame.hero.damage;
 
+  // РАСЧЁТ УРОНА ГОЛЫМИ РУКАМИ. НЕ ТРОГАТЬ!
   for (const wpn of myGame.hero.weapons) {
     pureHeroDamage -= wpn.baseDamage;
   }
@@ -187,17 +201,33 @@ app.get("/hit", (req, res) => {
 
   let isAnyCrit = false;
 
+  let totalDrain = 0;
+
+  let hasDoubleStrike = false;
+
   for (const wpn of myGame.hero.weapons) {
     const hitResult = wpn.calcDamage();
 
     totalDamage += hitResult.damage;
 
+    // Проверка на двойной удар
+    if (hitResult.isDoubleStrike) {
+      hasDoubleStrike = true;
+    }
+
+    // Логика горения (посох)
     if (hitResult.effect === "burn") {
       myGame.currentEnemy.burnTurns = 4;
     }
 
     if (hitResult.isCrit) {
       isAnyCrit = true;
+    }
+
+    // Логика вампиризма (коса)
+    if (hitResult.drain) {
+      totalDrain += hitResult.drain;
+      myGame.hero.heal(hitResult.drain);
     }
   }
 
@@ -210,6 +240,9 @@ app.get("/hit", (req, res) => {
     manaLeft: myGame.hero.mana,
     isCrit: isAnyCrit,
     enemyHpLeft: myGame.currentEnemy.hp,
+    heroHpLeft: myGame.hero.hp,
+    drainAmount: totalDrain,
+    isDoubleStrike: hasDoubleStrike,
   });
 });
 
@@ -369,6 +402,40 @@ app.get("/buy-item", (req, res) => {
         message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
       });
     }
+  } else if (itemToBuy === ITEMS.SCYTHE) {
+    if (myGame.hero.gold >= SETTINGS.SCYTHE_COST) {
+      myGame.hero.gold -= SETTINGS.SCYTHE_COST;
+      myGame.inventory.push(ITEMS.SCYTHE);
+
+      res.json({
+        success: true,
+        message: `You bought a ${ITEMS.SCYTHE} for ${SETTINGS.SCYTHE_COST} gold.`,
+        goldLeft: myGame.hero.gold,
+        inventory: myGame.inventory,
+      });
+    } else {
+      res.json({
+        success: false,
+        message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
+      });
+    }
+  } else if (itemToBuy === ITEMS.DUAL_SWORDS) {
+    if (myGame.hero.gold >= SETTINGS.DUAL_SWORDS_COST) {
+      myGame.hero.gold -= SETTINGS.DUAL_SWORDS_COST;
+      myGame.inventory.push(ITEMS.DUAL_SWORDS);
+
+      res.json({
+        success: true,
+        message: `You bought a ${ITEMS.DUAL_SWORDS} for ${SETTINGS.DUAL_SWORDS_COST} gold.`,
+        goldLeft: myGame.hero.gold,
+        inventory: myGame.inventory,
+      });
+    } else {
+      res.json({
+        success: false,
+        message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
+      });
+    }
   } else {
     res.json({
       success: false,
@@ -459,6 +526,17 @@ app.get("/use-item", (req, res) => {
     }
 
     message = `You equipped ${ITEMS.STAFF}.`;
+  } else if (item === ITEMS.SCYTHE) {
+    const isEquipped = myGame.hero.equipWeapon(new Scythe());
+
+    if (!isEquipped) {
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    }
+
+    message = `You equipped ${ITEMS.SCYTHE}.`;
   } else if (item === ITEMS.MANA_POTION) {
     if (myGame.hero.hp <= 0) {
       return res.json({
@@ -471,6 +549,17 @@ app.get("/use-item", (req, res) => {
     if (myGame.hero.mana >= myGame.hero.maxMana)
       myGame.hero.mana = myGame.hero.maxMana;
     message = `You used a ${ITEMS.MANA_POTION}. +${SETTINGS.MANA_RESTORE_COST} MP.`;
+  } else if (item === ITEMS.DUAL_SWORDS) {
+    const isEquipped = myGame.hero.equipWeapon(new DualDaggers());
+
+    if (!isEquipped) {
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    }
+
+    message = `You equipped ${ITEMS.DUAL_SWORDS}.`;
   }
 
   myGame.inventory.splice(itemIndex, 1);
@@ -519,6 +608,12 @@ app.get("/sell-item", (req, res) => {
   } else if (item === ITEMS.STAFF) {
     myGame.hero.gold += SETTINGS.STAFF_SELL_PRICE;
     message = `You sell a ${ITEMS.STAFF} for ${SETTINGS.STAFF_SELL_PRICE}.`;
+  } else if (item === ITEMS.SCYTHE) {
+    myGame.hero.gold += SETTINGS.SCYTHE_SELL_PRICE;
+    message = `You sell a ${ITEMS.SCYTHE} for ${SETTINGS.SCYTHE_SELL_PRICE}.`;
+  } else if (item === ITEMS.DUAL_SWORDS) {
+    myGame.hero.gold += SETTINGS.DUAL_SWORDS_SELL_PRICE;
+    message = `You sell a ${ITEMS.DUAL_SWORDS} for ${SETTINGS.DUAL_SWORDS_SELL_PRICE}.`;
   } else if (item === ITEMS.MANA_POTION) {
     myGame.hero.gold += SETTINGS.MANA_POTION_SELL_PRICE;
     message = `You sell a ${ITEMS.MANA_POTION} for ${SETTINGS.MANA_POTION_SELL_PRICE}.`;

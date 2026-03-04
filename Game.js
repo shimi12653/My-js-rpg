@@ -24,6 +24,7 @@ export class Game {
       ITEMS.BOMB,
       ITEMS.GOLD,
       ITEMS.DAGGER,
+      ITEMS.SCYTHE,
       ITEMS.MANA_POTION,
     );
 

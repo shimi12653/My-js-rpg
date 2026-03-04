@@ -1,18 +1,28 @@
 {
-  "level": 1,
+  "level": 2,
   "inventory": [
     "Healing Potion",
+    "Bomb",
     "Gold",
     "Rusty Dagger",
-    "Mana Potion",
+    "Iron Scythe",
     "Mana Potion"
   ],
   "heroStats": {
-    "hp": 100,
-    "maxHp": 100,
-    "damage": 5,
-    "gold": 925,
-    "equippedWeapons": 0,
-    "weapons": []
+    "hp": 87,
+    "maxHp": 120,
+    "damage": 22,
+    "gold": 650,
+    "equippedWeapons": 2,
+    "weapons": [
+      {
+        "name": "Dual Daggers",
+        "baseDamage": 15,
+        "handsRequired": 2,
+        "doubleStrikeChance": 0.3,
+        "critChance": 0.2,
+        "critMultiplier": 2
+      }
+    ]
   }
 }

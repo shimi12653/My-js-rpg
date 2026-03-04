@@ -18,6 +18,7 @@ import {
   apiFetchEnemies,
   apiSellItem,
 } from "./network.js";
+import { DualDaggers } from "./weapon.js";
 
 const myBtn = document.querySelector("#attack-btn");
 const mySpan = document.querySelector("#enemy-hp");
@@ -53,6 +54,8 @@ const shopItems = [
   { name: ITEMS.STAFF, price: SETTINGS.STAFF_COST },
   { name: ITEMS.MANA_POTION, price: SETTINGS.MANA_POTION_COST },
   { name: ITEMS.POTION, price: SETTINGS.POTION_COST },
+  { name: ITEMS.SCYTHE, price: SETTINGS.SCYTHE_COST },
+  { name: ITEMS.DUAL_SWORDS, price: SETTINGS.DUAL_SWORDS_COST },
 ];
 
 // Обая функция логов
@@ -465,6 +468,19 @@ myBtn.addEventListener("click", async () => {
     // Проверка пришла ли мана
     if (data.manaLeft !== undefined) {
       game.hero.mana = data.manaLeft;
+    }
+
+    // Проверка вампиризма
+    if (data.heroHpLeft !== undefined) {
+      game.hero.hp = data.heroHpLeft;
+
+      if (data.drainAmount) {
+        logMessage(`Drain! You restored ${data.drainAmount} HP.`, "#8B0000");
+      }
+    }
+
+    if (data.isDoubleStrike) {
+      logMessage(`Double Strike. Flurry of blows!`, `#1e90ff`);
     }
 
     logMessage(
