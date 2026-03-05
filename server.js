@@ -13,6 +13,16 @@ import {
   DualDaggers,
   Bow,
   Sword,
+  CinderheartStaff,
+  AbyssalSoulflameStaff,
+  GrimOathblade,
+  MoonlitExecutioner,
+  SoulReaperScythe,
+  GraveboundCrescent,
+  HollowMaskDaggers,
+  VeinrenderTwins,
+  WhisperingBoneBow,
+  AshenWraithLongbow,
 } from "./weapon.js";
 
 const app = express();
@@ -58,6 +68,36 @@ if (fs.existsSync(DB)) {
           return new Scythe();
         } else if (savedWeapon.name === "Wooden Bow") {
           return new Bow();
+
+          // --- новые посохи ---
+        } else if (savedWeapon.name === "Cinderheart Pyre Staff") {
+          return new CinderheartStaff();
+        } else if (savedWeapon.name === "Abyssal Soulflame Staff") {
+          return new AbyssalSoulflameStaff();
+
+          // --- новые мечи ---
+        } else if (savedWeapon.name === "Grim Oathblade") {
+          return new GrimOathblade();
+        } else if (savedWeapon.name === "Moonlit Executioner") {
+          return new MoonlitExecutioner();
+
+          // --- новые косы ---
+        } else if (savedWeapon.name === "Soul Reaper Scythe") {
+          return new SoulReaperScythe();
+        } else if (savedWeapon.name === "Gravebound Crescent") {
+          return new GraveboundCrescent();
+
+          // --- новые кинжалы ---
+        } else if (savedWeapon.name === "Hollow Mask Daggers") {
+          return new HollowMaskDaggers();
+        } else if (savedWeapon.name === "Veinrender Twins") {
+          return new VeinrenderTwins();
+
+          // --- новые луки ---
+        } else if (savedWeapon.name === "Whispering Bone Bow") {
+          return new WhisperingBoneBow();
+        } else if (savedWeapon.name === "Ashen Wraith Longbow") {
+          return new AshenWraithLongbow();
         } else {
           // И с любым другим видом оружия
           return new Weapon(
@@ -183,7 +223,7 @@ app.get("/enemy-attack", (req, res) => {
 });
 
 app.get("/hit", (req, res) => {
-  const hasStaff = myGame.hero.weapons.some((wpn) => wpn.name === "Fire Staff");
+  const hasStaff = myGame.hero.weapons.some((wpn) => wpn.burnChance);
 
   if (hasStaff) {
     if (myGame.hero.mana >= SETTINGS.STAFF_MANA_COST) {
@@ -576,6 +616,94 @@ app.get("/use-item", (req, res) => {
     }
 
     message = `You equipped ${ITEMS.BOW}.`;
+  } else if (item === "Cinderheart Pyre Staff") {
+    const isEquipped = myGame.hero.equipWeapon(new CinderheartStaff());
+    if (!isEquipped)
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    message = `You equipped Cinderheart Pyre Staff.`;
+  } else if (item === "Abyssal Soulflame Staff") {
+    const isEquipped = myGame.hero.equipWeapon(new AbyssalSoulflameStaff());
+    if (!isEquipped)
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    message = `You equipped Abyssal Soulflame Staff.`;
+
+    // --- НОВЫЕ МЕЧИ ---
+  } else if (item === "Grim Oathblade") {
+    const isEquipped = myGame.hero.equipWeapon(new GrimOathblade());
+    if (!isEquipped)
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    message = `You equipped Grim Oathblade.`;
+  } else if (item === "Moonlit Executioner") {
+    const isEquipped = myGame.hero.equipWeapon(new MoonlitExecutioner());
+    if (!isEquipped)
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    message = `You equipped Moonlit Executioner.`;
+
+    // --- НОВЫЕ КОСЫ ---
+  } else if (item === "Soul Reaper Scythe") {
+    const isEquipped = myGame.hero.equipWeapon(new SoulReaperScythe());
+    if (!isEquipped)
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    message = `You equipped Soul Reaper Scythe.`;
+  } else if (item === "Gravebound Crescent") {
+    const isEquipped = myGame.hero.equipWeapon(new GraveboundCrescent());
+    if (!isEquipped)
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    message = `You equipped Gravebound Crescent.`;
+
+    // --- НОВЫЕ КИНЖАЛЫ ---
+  } else if (item === "Hollow Mask Daggers") {
+    const isEquipped = myGame.hero.equipWeapon(new HollowMaskDaggers());
+    if (!isEquipped)
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    message = `You equipped Hollow Mask Daggers.`;
+  } else if (item === "Veinrender Twins") {
+    const isEquipped = myGame.hero.equipWeapon(new VeinrenderTwins());
+    if (!isEquipped)
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    message = `You equipped Veinrender Twins.`;
+
+    // --- НОВЫЕ ЛУКИ ---
+  } else if (item === "Whispering Bone Bow") {
+    const isEquipped = myGame.hero.equipWeapon(new WhisperingBoneBow());
+    if (!isEquipped)
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    message = `You equipped Whispering Bone Bow.`;
+  } else if (item === "Ashen Wraith Longbow") {
+    const isEquipped = myGame.hero.equipWeapon(new AshenWraithLongbow());
+    if (!isEquipped)
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    message = `You equipped Ashen Wraith Longbow.`;
   }
 
   myGame.inventory.splice(itemIndex, 1);

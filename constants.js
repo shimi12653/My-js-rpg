@@ -56,3 +56,46 @@ export const SETTINGS = {
   LEVEL_UP_DAMAGE: 2,
   ENEMY_LEVEL_MULTI: 0.2, // 20% + к силе за уровень
 };
+
+export const ADVANCED_WEAPONS = {
+  CINDERHEART_STAFF: {
+    name: "Cinderheart Pyre Staff",
+    cost: 1500,
+  },
+  ABYSSAL_SOULFLAME_STAFF: {
+    name: "Abyssal Soulflame Staff",
+    cost: 2200,
+  },
+  GRIM_OATHBLADE: {
+    name: "Grim Oathblade",
+    cost: 1000,
+  },
+  MOONLIT_EXECUTIONER: {
+    name: "Moonlit Executioner",
+    cost: 1800,
+  },
+  SOUL_REAPER_SCYTHE: {
+    name: "Soul Reaper Scythe",
+    cost: 2400,
+  },
+  GRAVEBOUND_CRESCENT: {
+    name: "Gravebound Crescent",
+    cost: 2000,
+  },
+  HOLLOW_MASK_DAGGERS: {
+    name: "Hollow Mask Daggers",
+    cost: 1600,
+  },
+  VEINRENDER_TWINS: {
+    name: "Veinrender Twins",
+    cost: 2100,
+  },
+  WHISPERING_BONE_BOW: {
+    name: "Whispering Bone Bow",
+    cost: 1500,
+  },
+  ASHEN_WRAITH_LONGBOW: {
+    name: "Ashen Wraith Longbow",
+    cost: 2600,
+  },
+};
