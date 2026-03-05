@@ -18,7 +18,6 @@ import {
   apiFetchEnemies,
   apiSellItem,
 } from "./network.js";
-import { DualDaggers } from "./weapon.js";
 
 const myBtn = document.querySelector("#attack-btn");
 const mySpan = document.querySelector("#enemy-hp");
@@ -50,12 +49,11 @@ const game = new Game();
 // Массив товаров в магазине
 const shopItems = [
   { name: ITEMS.BOMB, price: SETTINGS.BOMB_COST },
-  { name: ITEMS.HSWORD, price: SETTINGS.HSWORD_COST },
-  { name: ITEMS.STAFF, price: SETTINGS.STAFF_COST },
   { name: ITEMS.MANA_POTION, price: SETTINGS.MANA_POTION_COST },
+  { name: ITEMS.STAFF, price: SETTINGS.STAFF_COST },
   { name: ITEMS.POTION, price: SETTINGS.POTION_COST },
   { name: ITEMS.SCYTHE, price: SETTINGS.SCYTHE_COST },
-  { name: ITEMS.DUAL_SWORDS, price: SETTINGS.DUAL_SWORDS_COST },
+  { name: ITEMS.DUAL_DAGGERS, price: SETTINGS.DUAL_DAGGERS_COST },
   { name: ITEMS.BOW, price: SETTINGS.BOW_COST },
 ];
 

@@ -8,12 +8,11 @@ import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с 
 import { ITEMS, SETTINGS } from "./constants.js";
 import {
   Weapon,
-  Dagger,
-  HSword,
   FireStaff,
   Scythe,
   DualDaggers,
   Bow,
+  Sword,
 } from "./weapon.js";
 
 const app = express();
@@ -49,7 +48,9 @@ if (fs.existsSync(DB)) {
     // Тут происходит приведение текста в массив оружия
     if (savedData.heroStats?.weapons) {
       myGame.hero.weapons = savedData.heroStats.weapons.map((savedWeapon) => {
-        if (savedWeapon.name === "Fire Staff") {
+        if (savedWeapon.name === "Wooden Sword") {
+          return new Sword();
+        } else if (savedWeapon.name === "Fire Staff") {
           return new FireStaff();
         } else if (savedWeapon.name === "Dual Daggers") {
           return new DualDaggers();
@@ -104,7 +105,7 @@ app.get("/generate-loot", (req, res) => {
   let message = "No loot found.";
 
   if (Math.random() < 0.5) {
-    const possibleLoot = [ITEMS.POTION, ITEMS.DAGGER, ITEMS.GOLD];
+    const possibleLoot = [ITEMS.POTION, ITEMS.GOLD];
     droppedItem = possibleLoot[Math.floor(Math.random() * possibleLoot.length)];
 
     if (droppedItem === ITEMS.GOLD) {
@@ -349,23 +350,6 @@ app.get("/buy-item", (req, res) => {
         message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}.`,
       });
     }
-  } else if (itemToBuy === ITEMS.HSWORD) {
-    if (myGame.hero.gold >= SETTINGS.HSWORD_COST) {
-      myGame.hero.gold -= SETTINGS.HSWORD_COST;
-      myGame.inventory.push(ITEMS.HSWORD);
-
-      res.json({
-        success: true,
-        message: `You bought a ${ITEMS.HSWORD} for ${SETTINGS.HSWORD_COST} gold.`,
-        goldLeft: myGame.hero.gold,
-        inventory: myGame.inventory,
-      });
-    } else {
-      res.json({
-        success: false,
-        message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
-      });
-    }
   } else if (itemToBuy === ITEMS.STAFF) {
     if (myGame.hero.gold >= SETTINGS.STAFF_COST) {
       myGame.hero.gold -= SETTINGS.STAFF_COST;
@@ -434,14 +418,14 @@ app.get("/buy-item", (req, res) => {
         message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
       });
     }
-  } else if (itemToBuy === ITEMS.DUAL_SWORDS) {
-    if (myGame.hero.gold >= SETTINGS.DUAL_SWORDS_COST) {
-      myGame.hero.gold -= SETTINGS.DUAL_SWORDS_COST;
-      myGame.inventory.push(ITEMS.DUAL_SWORDS);
+  } else if (itemToBuy === ITEMS.DUAL_DAGGERS) {
+    if (myGame.hero.gold >= SETTINGS.DUAL_DAGGERS_COST) {
+      myGame.hero.gold -= SETTINGS.DUAL_DAGGERS_COST;
+      myGame.inventory.push(ITEMS.DUAL_DAGGERS);
 
       res.json({
         success: true,
-        message: `You bought a ${ITEMS.DUAL_SWORDS} for ${SETTINGS.DUAL_SWORDS_COST} gold.`,
+        message: `You bought a ${ITEMS.DUAL_DAGGERS} for ${SETTINGS.DUAL_DAGGERS_COST} gold.`,
         goldLeft: myGame.hero.gold,
         inventory: myGame.inventory,
       });
@@ -506,28 +490,6 @@ app.get("/use-item", (req, res) => {
     myGame.hero.hp += SETTINGS.HEAL_AMOUNT;
     if (myGame.hero.hp >= myGame.hero.maxHp) myGame.hero.hp = myGame.hero.maxHp;
     message = `You used a ${ITEMS.POTION}! +${SETTINGS.HEAL_AMOUNT} HP.`;
-  } else if (item === ITEMS.DAGGER) {
-    const isEquipped = myGame.hero.equipWeapon(new Dagger());
-
-    if (!isEquipped) {
-      return res.json({
-        success: false,
-        message: `You can't pick more than ${myGame.hero.maxHands} swords.`,
-      });
-    }
-
-    message = `You equipped ${ITEMS.DAGGER}.`;
-  } else if (item === ITEMS.HSWORD) {
-    const isEquipped = myGame.hero.equipWeapon(new HSword());
-
-    if (!isEquipped) {
-      return res.json({
-        success: false,
-        message: `You don't have enough free hands!`,
-      });
-    }
-
-    message = `You equipped ${ITEMS.HSWORD}.`;
   } else if (item === ITEMS.BOMB) {
     if (myGame.currentEnemy.hp <= 0) {
       return res.json({
@@ -547,6 +509,17 @@ app.get("/use-item", (req, res) => {
   } else if (item === ITEMS.GOLD) {
     myGame.hero.gold += SETTINGS.GOLD_DROP;
     message = `You used a bad of Gold! +${SETTINGS.GOLD_DROP} coins.`;
+  } else if (item === ITEMS.SWORD) {
+    const isEquipped = myGame.hero.equipWeapon(new Sword());
+
+    if (!isEquipped) {
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    }
+
+    message = `You equipped ${ITEMS.SWORD}.`;
   } else if (item === ITEMS.STAFF) {
     const isEquipped = myGame.hero.equipWeapon(new FireStaff());
 
@@ -581,7 +554,7 @@ app.get("/use-item", (req, res) => {
     if (myGame.hero.mana >= myGame.hero.maxMana)
       myGame.hero.mana = myGame.hero.maxMana;
     message = `You used a ${ITEMS.MANA_POTION}. +${SETTINGS.MANA_RESTORE_COST} MP.`;
-  } else if (item === ITEMS.DUAL_SWORDS) {
+  } else if (item === ITEMS.DUAL_DAGGERS) {
     const isEquipped = myGame.hero.equipWeapon(new DualDaggers());
 
     if (!isEquipped) {
@@ -591,7 +564,7 @@ app.get("/use-item", (req, res) => {
       });
     }
 
-    message = `You equipped ${ITEMS.DUAL_SWORDS}.`;
+    message = `You equipped ${ITEMS.DUAL_DAGGERS}.`;
   } else if (item === ITEMS.BOW) {
     const isEquipped = myGame.hero.equipWeapon(new Bow());
 
@@ -639,24 +612,21 @@ app.get("/sell-item", (req, res) => {
   if (item === ITEMS.POTION) {
     myGame.hero.gold += SETTINGS.POTION_SELL_PRICE;
     message = `You sell a ${ITEMS.POTION} for ${SETTINGS.POTION_SELL_PRICE}.`;
-  } else if (item === ITEMS.DAGGER) {
-    myGame.hero.gold += SETTINGS.DAGGER_SELL_PRICE;
-    message = `You sell a ${ITEMS.DAGGER} for ${SETTINGS.DAGGER_SELL_PRICE}.`;
   } else if (item === ITEMS.BOMB) {
     myGame.hero.gold += SETTINGS.BOMB_SELL_PRICE;
     message = `You sell a ${ITEMS.BOMB} for ${SETTINGS.BOMB_SELL_PRICE}.`;
-  } else if (item === ITEMS.HSWORD) {
-    myGame.hero.gold += SETTINGS.HSWORD_SELL_PRICE;
-    message = `You sell a ${ITEMS.HSWORD} for ${SETTINGS.HSWORD_SELL_PRICE}.`;
+  } else if (item === ITEMS.SWORD) {
+    myGame.hero.gold += SETTINGS.SWORD_SELL_PRICE;
+    message = `You sell a ${ITEMS.SWORD} for ${SETTINGS.SWORD_SELL_PRICE}.`;
   } else if (item === ITEMS.STAFF) {
     myGame.hero.gold += SETTINGS.STAFF_SELL_PRICE;
     message = `You sell a ${ITEMS.STAFF} for ${SETTINGS.STAFF_SELL_PRICE}.`;
   } else if (item === ITEMS.SCYTHE) {
     myGame.hero.gold += SETTINGS.SCYTHE_SELL_PRICE;
     message = `You sell a ${ITEMS.SCYTHE} for ${SETTINGS.SCYTHE_SELL_PRICE}.`;
-  } else if (item === ITEMS.DUAL_SWORDS) {
-    myGame.hero.gold += SETTINGS.DUAL_SWORDS_SELL_PRICE;
-    message = `You sell a ${ITEMS.DUAL_SWORDS} for ${SETTINGS.DUAL_SWORDS_SELL_PRICE}.`;
+  } else if (item === ITEMS.DUAL_DAGGERS) {
+    myGame.hero.gold += SETTINGS.DUAL_DAGGERS_SELL_PRICE;
+    message = `You sell a ${ITEMS.DUAL_DAGGERS} for ${SETTINGS.DUAL_DAGGERS_SELL_PRICE}.`;
   } else if (item === ITEMS.BOW) {
     myGame.hero.gold += SETTINGS.BOW_SELL_PRICE;
     message = `You sell a ${ITEMS.BOW} for ${SETTINGS.BOW_SELL_PRICE}.`;

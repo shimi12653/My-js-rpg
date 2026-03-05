@@ -11,7 +11,7 @@ export class Game {
     this.currentEnemy = null;
     this.state = GAME_STATE.PLAYING;
     this.isProccessingTurn = false;
-    this.inventory = [ITEMS.POTION, ITEMS.BOMB, ITEMS.DAGGER, ITEMS.GOLD];
+    this.inventory = [];
   }
 
   reset() {
@@ -19,14 +19,7 @@ export class Game {
     this.hero = new Hero();
 
     this.inventory = [];
-    this.inventory.push(
-      ITEMS.POTION,
-      ITEMS.BOMB,
-      ITEMS.GOLD,
-      ITEMS.DAGGER,
-      ITEMS.SCYTHE,
-      ITEMS.MANA_POTION,
-    );
+    this.inventory.push(ITEMS.SWORD);
 
     this.state = GAME_STATE.PLAYING;
     this.isProccessingTurn = false;
