@@ -133,3 +133,23 @@ export class DualDaggers extends Weapon {
     return result;
   }
 }
+
+export class Bow extends Weapon {
+  constructor() {
+    super("Wooden Bow", 10, 2);
+    this.dodgeChance = 0.25; // Будет вызван при ударе врага
+    this.critChance = 0.4;
+    this.critMultiplier = 1.5;
+  }
+
+  calcDamage() {
+    const result = super.calcDamage();
+
+    if (Math.random() < this.critChance) {
+      result.damage = Math.floor(result.damage * this.critMultiplier);
+      result.isCrit = true;
+    }
+
+    return result;
+  }
+}

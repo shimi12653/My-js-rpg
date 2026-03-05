@@ -56,6 +56,7 @@ const shopItems = [
   { name: ITEMS.POTION, price: SETTINGS.POTION_COST },
   { name: ITEMS.SCYTHE, price: SETTINGS.SCYTHE_COST },
   { name: ITEMS.DUAL_SWORDS, price: SETTINGS.DUAL_SWORDS_COST },
+  { name: ITEMS.BOW, price: SETTINGS.BOW_COST },
 ];
 
 // Обая функция логов
@@ -349,10 +350,14 @@ const enemyAttack = async () => {
       handleVictory();
       return;
     } else {
-      logMessage(
-        `Enemy hits you for ${data.damageDealt} damage! (Crit level: ${data.critLevel}x)`,
-        "red",
-      );
+      if (data.isDodged) {
+        logMessage(`You dodged enemy attack. Great reaction!`, "#F0FFFF");
+      } else {
+        logMessage(
+          `Enemy hits you for ${data.damageDealt} damage! (Crit level: ${data.critLevel}x)`,
+          "red",
+        );
+      }
     }
 
     if (game.hero.hp <= 0) {
@@ -365,7 +370,7 @@ const enemyAttack = async () => {
       clearInterval(regenTimer);
     }
   } catch (e) {
-    console.error("Server unavailable. Enemy missed.", "red");
+    logMessage("Server unavailable. Enemy missed.", "red");
   }
 };
 

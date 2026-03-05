@@ -13,6 +13,7 @@ import {
   FireStaff,
   Scythe,
   DualDaggers,
+  Bow,
 } from "./weapon.js";
 
 const app = express();
@@ -48,17 +49,14 @@ if (fs.existsSync(DB)) {
     // Тут происходит приведение текста в массив оружия
     if (savedData.heroStats?.weapons) {
       myGame.hero.weapons = savedData.heroStats.weapons.map((savedWeapon) => {
-        if (savedWeapon.name === "Rusty Dagger") {
-          // если название сохранённого оружия - 'Rusty dagger' ...
-          return new Dagger(); // Возвращается класс Dagger
-        } else if (savedWeapon.name === "Heavy Sword") {
-          return new HSword(); // Также и с Heavy sword
-        } else if (savedWeapon.name === "Fire Staff") {
+        if (savedWeapon.name === "Fire Staff") {
           return new FireStaff();
         } else if (savedWeapon.name === "Dual Daggers") {
           return new DualDaggers();
         } else if (savedWeapon.name === "Iron Scythe") {
           return new Scythe();
+        } else if (savedWeapon.name === "Wooden Bow") {
+          return new Bow();
         } else {
           // И с любым другим видом оружия
           return new Weapon(
@@ -129,6 +127,7 @@ app.get("/generate-loot", (req, res) => {
 // метод атаки (враг и герой)
 app.get("/enemy-attack", (req, res) => {
   let burnMessage = "";
+  let isDodged = false;
 
   if (myGame.currentEnemy.burnTurns > 0) {
     myGame.currentEnemy.takeDamage(myGame.currentEnemy.burnDamage);
@@ -153,9 +152,23 @@ app.get("/enemy-attack", (req, res) => {
   const ENEMY_LEVEL_MULTI = 0.2;
 
   const levelMultiplier = 1 + currentLevel * ENEMY_LEVEL_MULTI;
-  const scaledDamage = Math.floor(myGame.currentEnemy.damage * levelMultiplier);
+  let scaledDamage = Math.floor(myGame.currentEnemy.damage * levelMultiplier);
 
-  myGame.hero.takeDamage(scaledDamage);
+  // ПРоверка на уклонение
+  for (const wpn of myGame.hero.weapons) {
+    if (wpn.dodgeChance) {
+      if (Math.random() < wpn.dodgeChance) {
+        isDodged = true;
+        break;
+      }
+    }
+  }
+
+  if (!isDodged) {
+    myGame.hero.takeDamage(scaledDamage);
+  } else {
+    scaledDamage = 0;
+  }
 
   res.json({
     message: "The enemy has struck back!",
@@ -164,6 +177,7 @@ app.get("/enemy-attack", (req, res) => {
     enemyHpLeft: myGame.currentEnemy.hp,
     critLevel: levelMultiplier.toFixed(1),
     burnMessage: burnMessage,
+    isDodged: isDodged,
   });
 });
 
@@ -205,6 +219,7 @@ app.get("/hit", (req, res) => {
 
   let hasDoubleStrike = false;
 
+  // Проверки на доп эффекты и другие
   for (const wpn of myGame.hero.weapons) {
     const hitResult = wpn.calcDamage();
 
@@ -436,6 +451,23 @@ app.get("/buy-item", (req, res) => {
         message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
       });
     }
+  } else if (itemToBuy === ITEMS.BOW) {
+    if (myGame.hero.gold >= SETTINGS.BOW_COST) {
+      myGame.hero.gold -= SETTINGS.BOW_COST;
+      myGame.inventory.push(ITEMS.BOW);
+
+      res.json({
+        success: true,
+        message: `You bought a ${ITEMS.BOW} for ${SETTINGS.BOW_COST} gold.`,
+        goldLeft: myGame.hero.gold,
+        inventory: myGame.inventory,
+      });
+    } else {
+      res.json({
+        success: false,
+        message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
+      });
+    }
   } else {
     res.json({
       success: false,
@@ -560,6 +592,17 @@ app.get("/use-item", (req, res) => {
     }
 
     message = `You equipped ${ITEMS.DUAL_SWORDS}.`;
+  } else if (item === ITEMS.BOW) {
+    const isEquipped = myGame.hero.equipWeapon(new Bow());
+
+    if (!isEquipped) {
+      return res.json({
+        success: false,
+        message: `You don't have enough free hands!`,
+      });
+    }
+
+    message = `You equipped ${ITEMS.BOW}.`;
   }
 
   myGame.inventory.splice(itemIndex, 1);
@@ -614,6 +657,9 @@ app.get("/sell-item", (req, res) => {
   } else if (item === ITEMS.DUAL_SWORDS) {
     myGame.hero.gold += SETTINGS.DUAL_SWORDS_SELL_PRICE;
     message = `You sell a ${ITEMS.DUAL_SWORDS} for ${SETTINGS.DUAL_SWORDS_SELL_PRICE}.`;
+  } else if (item === ITEMS.BOW) {
+    myGame.hero.gold += SETTINGS.BOW_SELL_PRICE;
+    message = `You sell a ${ITEMS.BOW} for ${SETTINGS.BOW_SELL_PRICE}.`;
   } else if (item === ITEMS.MANA_POTION) {
     myGame.hero.gold += SETTINGS.MANA_POTION_SELL_PRICE;
     message = `You sell a ${ITEMS.MANA_POTION} for ${SETTINGS.MANA_POTION_SELL_PRICE}.`;

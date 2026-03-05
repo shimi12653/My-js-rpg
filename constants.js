@@ -14,6 +14,7 @@ export const ITEMS = {
   MANA_POTION: "Mana Potion",
   SCYTHE: "Iron Scythe",
   DUAL_SWORDS: "Dual Daggers",
+  BOW: "Wooden Bow",
 };
 
 export const SETTINGS = {
@@ -50,6 +51,8 @@ export const SETTINGS = {
   SCYTHE_SELL_PRICE: 80,
   DUAL_SWORDS_COST: 350,
   DUAL_SWORDS_SELL_PRICE: 70,
+  BOW_COST: 300,
+  BOW_SELL_PRICE: 60,
 
   // progression
   LEVEL_UP_HP: 20,

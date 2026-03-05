@@ -1,27 +1,29 @@
 {
-  "level": 2,
+  "level": 4,
   "inventory": [
     "Healing Potion",
     "Bomb",
     "Gold",
     "Rusty Dagger",
     "Iron Scythe",
-    "Mana Potion"
+    "Mana Potion",
+    "Healing Potion",
+    "Rusty Dagger"
   ],
   "heroStats": {
-    "hp": 87,
-    "maxHp": 120,
-    "damage": 22,
-    "gold": 650,
+    "hp": 72,
+    "maxHp": 160,
+    "damage": 21,
+    "gold": 700,
     "equippedWeapons": 2,
     "weapons": [
       {
-        "name": "Dual Daggers",
-        "baseDamage": 15,
+        "name": "Wooden Bow",
+        "baseDamage": 10,
         "handsRequired": 2,
-        "doubleStrikeChance": 0.3,
-        "critChance": 0.2,
-        "critMultiplier": 2
+        "dodgeChance": 0.25,
+        "critChance": 0.4,
+        "critMultiplier": 1.5
       }
     ]
   }
