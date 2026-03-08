@@ -314,6 +314,27 @@ app.get("/bomb", (req, res) => {
   });
 });
 
+// Преедвижение на сервере
+app.get("/move", (req, res) => {
+  const direction = req.query.dir;
+
+  const validDir = ["north", "south", "east", "west"];
+  if (!validDir.includes(direction)) {
+    res.json({
+      success: false,
+      message: `Invalid direction:`,
+    });
+  }
+
+  myGame.hero.move(direction);
+
+  res.json({
+    success: true,
+    message: `You moved ${direction}.`,
+    currentDirection: { x: myGame.hero.x, y: myGame.hero.y },
+  });
+});
+
 // операции со статистикой героя (исцеление, сброс и повышение уровня)
 app.get("/heal-hero", (req, res) => {
   myGame.hero.hp = myGame.hero.maxHp;

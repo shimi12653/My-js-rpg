@@ -11,6 +11,10 @@ export class Hero {
     this.weapons = []; // Массив для счёта оружия
     this.mana = SETTINGS.HERO_MAX_MANA;
     this.maxMana = SETTINGS.HERO_MAX_MANA;
+
+    // Навигация в матрице
+    this.x = 0;
+    this.y = 0;
   }
 
   takeDamage(amount) {
@@ -57,5 +61,13 @@ export class Hero {
     this.equippedWeapons = data.equippedWeapons;
     this.hp = data.hp ?? 100;
     this.maxHp = data.maxHp ?? 100;
+  }
+
+  // Движения (без проверки на стены)
+  move(direction) {
+    if (direction === "north") this.y += 1;
+    if (direction === "south") this.y -= 1;
+    if (direction === "east") this.x += 1;
+    if (direction === "west") this.x -= 1;
   }
 }
