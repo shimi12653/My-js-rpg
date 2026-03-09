@@ -317,21 +317,67 @@ app.get("/bomb", (req, res) => {
 // Преедвижение на сервере
 app.get("/move", (req, res) => {
   const direction = req.query.dir;
-
   const validDir = ["north", "south", "east", "west"];
+
   if (!validDir.includes(direction)) {
-    res.json({
+    return res.json({
       success: false,
       message: `Invalid direction:`,
     });
   }
 
-  myGame.hero.move(direction);
+  let nextX = myGame.hero.x;
+  let nextY = myGame.hero.y;
+
+  if (direction === "north") nextY -= 1;
+  if (direction === "south") nextY += 1;
+  if (direction === "east") nextX += 1;
+  if (direction === "west") nextX -= 1;
+
+  if (
+    nextY < 0 ||
+    nextX < 0 ||
+    nextY >= myGame.map.length ||
+    nextX >= myGame.map[0].length
+  ) {
+    return res.json({
+      success: false,
+      message: "You reached the edge of the world. Around only dark abyss...",
+      currentPosition: { x: myGame.hero.x, y: myGame.hero.y },
+    });
+  }
+
+  const isThatWall = myGame.map[nextY][nextX];
+
+  if (isThatWall === 0) {
+    return res.json({
+      success: false,
+      message: "There is a wall ahead of you.",
+      currentPosition: { x: myGame.hero.x, y: myGame.hero.y },
+    });
+  } else if (isThatWall === 2) {
+    // Сундук на карте
+    myGame.hero.addGold(150);
+
+    myGame.hero.x = nextX;
+    myGame.hero.y = nextY;
+
+    myGame.map[nextY][nextX] = 1; // Сундук становится обычной клеткой
+
+    return res.json({
+      success: true,
+      message: "You found a chest with gold! +150 coins to your balance.",
+      goldLeft: myGame.hero.gold,
+    });
+  }
+
+  myGame.hero.x = nextX;
+  myGame.hero.y = nextY;
 
   res.json({
     success: true,
     message: `You moved ${direction}.`,
-    currentDirection: { x: myGame.hero.x, y: myGame.hero.y },
+    currentPosition: { x: myGame.hero.x, y: myGame.hero.y },
   });
 });
 

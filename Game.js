@@ -11,6 +11,16 @@ export class Game {
     this.state = GAME_STATE.PLAYING;
     this.isProccessingTurn = false;
     this.inventory = [];
+
+    // Карта подземелия
+    // 0 - на сервере стена, 1 - пол, 2 - сундук с золотом
+    this.map = [
+      [0, 0, 0, 0, 0],
+      [0, 1, 1, 1, 0],
+      [0, 1, 0, 1, 0],
+      [0, 1, 1, 2, 0],
+      [0, 0, 0, 0, 0],
+    ];
   }
 
   reset() {

@@ -134,6 +134,16 @@ export const apiSellItem = async (index) => {
   }
 };
 
+export const apiMove = async (direction) => {
+  try {
+    const response = await fetch(`${BASE_URL}/move?dir=${direction}`);
+    return await response.json();
+  } catch (e) {
+    console.error("Network Error (move): ", e);
+    throw e;
+  }
+};
+
 export const apiFetchEnemies = () => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {

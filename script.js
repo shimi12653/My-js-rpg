@@ -17,6 +17,7 @@ import {
   apiBuyItem,
   apiFetchEnemies,
   apiSellItem,
+  apiMove,
 } from "./network.js";
 
 const myBtn = document.querySelector("#attack-btn");
@@ -40,6 +41,10 @@ const sellBtn = document.querySelector("#sell-mode-btn");
 const shopList = document.querySelector("#shop-list");
 const heroMp = document.querySelector("#hero-mp");
 const heroMpBar = document.querySelector("#hero-mp-bar");
+const moveNorth = document.querySelector("#btn-north");
+const moveSouth = document.querySelector("#btn-south");
+const moveEast = document.querySelector("#btn-east");
+const moveWest = document.querySelector("#btn-west");
 
 let regenTimer; // Таймер регена врага на 5% от макс хп
 let isSellMode = false; // Состояние для продажи вещей
@@ -456,6 +461,84 @@ const toggleControls = (isDisabled) => {
   shopList.style.color = isDisabled ? "#BBB" : "";
 };
 
+// Кнопки движения
+moveNorth.addEventListener("click", async () => {
+  try {
+    const data = await apiMove("north");
+
+    if (data.success) {
+      logMessage(data.message, "#C0C0C0");
+
+      if (data.goldLeft !== undefined) {
+        game.hero.gold = data.goldLeft;
+        updateHeroUI();
+      }
+    } else {
+      logMessage(data.message, "#3b8898");
+    }
+  } catch (e) {
+    logMessage("Server unavailable. Move failed.", "red");
+  }
+});
+
+moveSouth.addEventListener("click", async () => {
+  try {
+    const data = await apiMove("south");
+
+    if (data.success) {
+      logMessage(data.message, "#C0C0C0");
+
+      if (data.goldLeft !== undefined) {
+        game.hero.gold = data.goldLeft;
+        updateHeroUI();
+      }
+    } else {
+      logMessage(data.message, "#3b8898");
+    }
+  } catch (e) {
+    logMessage("Server unavailable. Move failed.", "red");
+  }
+});
+
+moveEast.addEventListener("click", async () => {
+  try {
+    const data = await apiMove("east");
+
+    if (data.success) {
+      logMessage(data.message, "#C0C0C0");
+
+      if (data.goldLeft !== undefined) {
+        game.hero.gold = data.goldLeft;
+        updateHeroUI();
+      }
+    } else {
+      logMessage(data.message, "#3b8898");
+    }
+  } catch (e) {
+    logMessage("Server unavailable. Move failed.", "red");
+  }
+});
+
+moveWest.addEventListener("click", async () => {
+  try {
+    const data = await apiMove("west");
+
+    if (data.success) {
+      logMessage(data.message, "#C0C0C0");
+
+      if (data.goldLeft !== undefined) {
+        game.hero.gold = data.goldLeft;
+        updateHeroUI();
+      }
+    } else {
+      logMessage(data.message, "#3b8898");
+    }
+  } catch (e) {
+    logMessage("Server unavailable. Move failed.", "red");
+  }
+});
+
+// Кнопка атаки
 myBtn.addEventListener("click", async () => {
   if (game.isProccessingTurn) return;
 
@@ -548,10 +631,13 @@ myBtn.addEventListener("click", async () => {
   updateHeroUI();
 });
 
+// Кнопка рестарта игры
 myRestart.addEventListener("click", initGame);
 
+// Кнопка ресета игры
 myResStat.addEventListener("click", resetProgress);
 
+// Кнопка продажи вещей
 sellBtn.addEventListener("click", () => {
   isSellMode = !isSellMode;
 
@@ -577,7 +663,7 @@ enemySelect.addEventListener("change", () => {
   initGame();
 });
 
-// Сохранение игры на локальный диск
+// Сохранение и загрузка игры
 const saveGame = async () => {
   const payload = {
     level: game.level,
