@@ -18,15 +18,16 @@ import {
   apiFetchEnemies,
   apiSellItem,
   apiMove,
+  apiGetMap,
 } from "./network.js";
 
 const myBtn = document.querySelector("#attack-btn");
 const mySpan = document.querySelector("#enemy-hp");
+const enemyHpBar = document.querySelector("#enemy-hp-bar");
 const myP = document.querySelector("#log");
-const myHpBar = document.querySelector("#hp-bar");
+const myHpBar = document.querySelector("#hero-hp-bar");
 const myRestart = document.querySelector("#restart-btn");
 const myUl = document.querySelector("#inventory-list");
-const enemySelect = document.querySelector("#enemy-select");
 const enemyImg = document.querySelector("#enemy-img");
 const lvlIndicator = document.querySelector("#game-level");
 const myResStat = document.querySelector("#reset-btn");
@@ -45,8 +46,8 @@ const moveNorth = document.querySelector("#btn-north");
 const moveSouth = document.querySelector("#btn-south");
 const moveEast = document.querySelector("#btn-east");
 const moveWest = document.querySelector("#btn-west");
+const miniMap = document.querySelector("#mini-map");
 
-let regenTimer; // Таймер регена врага на 5% от макс хп
 let isSellMode = false; // Состояние для продажи вещей
 
 const game = new Game();
@@ -79,6 +80,44 @@ const logMessage = (text, color = "black", fontWeight = "normal") => {
   }
 };
 
+// Рендер карты
+const renderMap = (mapData, discoveredMap, heroX, heroY) => {
+  miniMap.innerText = "";
+  // row - массив в карте (сверху вниз берётся), y - индекс строчки массива
+  mapData.forEach((row, y) => {
+    // cell - наша цифра внутрии массива (пока от 0 до 3), x - индекс cell'a
+    row.forEach((cell, x) => {
+      const div = document.createElement("div");
+
+      // Выставляю стандартные настройки для дива
+      div.setAttribute("style", "width: 20px; height: 20px;");
+
+      if (!discoveredMap[y][x]) {
+        div.style.backgroundColor = "#000000";
+      } else {
+        // Закрашиваю стены и пол (сундуки, враги и тд - всё такого же цвета, как и пол)
+        if (cell === 0) {
+          div.style.backgroundColor = "#1c1c1c";
+        } else {
+          div.style.backgroundColor = "#696969";
+        }
+      }
+
+      // Герой будет @ на синем фоне
+      if (x === heroX && y === heroY) {
+        div.style.backgroundColor = "#000080";
+        div.innerText = "@";
+        div.style.color = "#F8F8FF";
+        div.style.textAlign = "center";
+        div.style.lineHeight = "20px";
+        div.style.fontWeight = "bold";
+      }
+
+      miniMap.appendChild(div);
+    });
+  });
+};
+
 // Жизни и бар хп героя
 const updateHeroUI = () => {
   heroHp.innerText = game.hero.hp;
@@ -93,6 +132,20 @@ const updateHeroUI = () => {
 
   const mpPercent = Math.max(0, (game.hero.mana / game.hero.maxMana) * 100);
   heroMpBar.style.width = `${mpPercent}%`;
+};
+
+// Жизни и бар хп врага
+const updateEnemyUI = () => {
+  mySpan.innerText = game.currentEnemy.hp;
+
+  enemyImg.src = game.currentEnemy.img;
+
+  const hpPercent = Math.max(
+    0,
+    (game.currentEnemy.hp / game.currentEnemy.maxHp) * 100,
+  );
+
+  enemyHpBar.style.width = `${hpPercent}%`;
 };
 
 // Функция рендера магазина
@@ -155,13 +208,8 @@ const renderInventory = () => {
         return;
       }
 
-      if (
-        game.state !== GAME_STATE.PLAYING &&
-        game.state !== GAME_STATE.VICTORY
-      ) {
-        console.log(
-          "Game is over, you cannot do anything with your inventory.",
-        );
+      if (game.state === GAME_STATE.GAME_OVER) {
+        console.log("You are dead. Inventory is locked.");
         return;
       }
 
@@ -240,9 +288,8 @@ const renderInventory = () => {
 
             mySpan.innerText = game.currentEnemy.hp;
             const barWidth =
-              (game.currentEnemy.hp / (game.currentEnemy.maxHp * game.level)) *
-              100;
-            myHpBar.style.width = `${barWidth}%`;
+              (game.currentEnemy.hp / game.currentEnemy.maxHp) * 100;
+            enemyHpBar.style.width = `${barWidth}%`;
 
             if (data.itemUsed !== ITEMS.BOMB) saveGame();
           } else {
@@ -283,8 +330,8 @@ const handleVictory = async () => {
   myBtn.disabled = true;
   myBtn.style.color = "#BBBBBB";
   logMessage("Enemy is dead. Victory!", "blue", "bold");
-  myHpBar.style.width = "0%";
-  clearInterval(regenTimer);
+  enemyHpBar.style.width = "0%";
+  toggleCombatUI(false);
 
   try {
     await dropLoot();
@@ -344,7 +391,7 @@ const enemyAttack = async () => {
       mySpan.innerText = game.currentEnemy.hp;
       const barWidth =
         (game.currentEnemy.hp / (game.currentEnemy.maxHp * game.level)) * 100;
-      myHpBar.style.width = `${Math.max(0, barWidth)}%`;
+      enemyHpBar.style.width = `${Math.max(0, barWidth)}%`;
     }
 
     if (data.isEnemyDead) {
@@ -370,7 +417,6 @@ const enemyAttack = async () => {
       myBtn.disabled = true;
       myBtn.style.color = "#BBB";
       logMessage("You died... Game over.", "red", "bold");
-      clearInterval(regenTimer);
     }
   } catch (e) {
     logMessage("Server unavailable. Enemy missed.", "red");
@@ -394,37 +440,39 @@ const resetProgress = async () => {
 };
 
 const initGame = async () => {
-  game.state = GAME_STATE.PLAYING;
-
   game.isProccessingTurn = false;
 
-  // Если у героя хп 0 или меньше - хилим полностью
-  if (game.hero.hp <= 0) {
-    game.hero.hp = game.hero.maxHp;
+  // Защита от хилла на F5
+  if (game.state === GAME_STATE.GAME_OVER) {
+    toggleCombatUI(false);
+    toggleControls(true);
+    myRestart.disabled = false;
+    myResStat.disabled = false;
+    logMessage(`You are dead. Press 'Play Again' to restart.`, "red", "bold");
+    updateHeroUI();
+    return;
+  }
 
-    try {
-      const data = await apiHealHero();
-
-      console.log(data.message);
-    } catch (e) {
-      console.error("Failed to heal a hero on server. Reason: ", e);
-    }
+  if (game.state === GAME_STATE.BATTLE) {
+    toggleCombatUI(true);
+  } else {
+    toggleCombatUI(false);
   }
 
   updateHeroUI();
 
-  game.currentEnemy.hp = Math.floor(game.currentEnemy.maxHp * game.level);
-
+  // Рендер карты
   try {
-    const data = await apiSyncEnemy(
-      game.currentEnemy.name,
-      game.currentEnemy.hp,
-      game.currentEnemy.damage,
-    );
+    const mapResponse = await apiGetMap();
 
-    console.log("Synchronization: ", data.message);
+    renderMap(
+      mapResponse.map,
+      mapResponse.discoveredMap,
+      mapResponse.heroX,
+      mapResponse.heroY,
+    );
   } catch (e) {
-    console.error("Sync failed: ", e);
+    console.error("Load map failed: ", e);
   }
 
   toggleControls(false);
@@ -435,7 +483,10 @@ const initGame = async () => {
 
   logMessage("New game started...", "black");
 
-  myHpBar.style.width = "100%";
+  if (game.currentEnemy) {
+    const hpPercent = (game.currentEnemy.hp / game.currentEnemy.maxHp) * 100;
+    enemyHpBar.style.width = `${Math.max(0, hpPercent)}`;
+  }
 
   mySpan.style.color = "";
   enemyImg.src = game.currentEnemy.img;
@@ -445,10 +496,19 @@ const initGame = async () => {
   renderShop();
 };
 
+// Скрытие интерфейса боя
+const toggleCombatUI = (isCombat) => {
+  const combatPanel = document.querySelector("#combat-panel");
+  if (isCombat) {
+    combatPanel.style.display = "block"; // Враг показан на экране
+  } else {
+    combatPanel.style.display = "none";
+  }
+};
+
 // Функция для блокировки интерфейса кнопок
 const toggleControls = (isDisabled) => {
   myBtn.disabled = isDisabled;
-  enemySelect.disabled = isDisabled;
   myResStat.disabled = isDisabled;
   myRestart.disabled = isDisabled;
   sellBtn.disabled = isDisabled;
@@ -467,11 +527,41 @@ moveNorth.addEventListener("click", async () => {
     const data = await apiMove("north");
 
     if (data.success) {
-      logMessage(data.message, "#C0C0C0");
-
       if (data.goldLeft !== undefined) {
         game.hero.gold = data.goldLeft;
         updateHeroUI();
+      }
+
+      // Рендер карты
+      try {
+        const mapResponse = await apiGetMap();
+
+        renderMap(
+          mapResponse.map,
+          mapResponse.discoveredMap,
+          mapResponse.heroX,
+          mapResponse.heroY,
+        );
+      } catch (e) {
+        console.error("Load map failed: ", e);
+      }
+
+      if (data.battleStarted) {
+        game.state = GAME_STATE.BATTLE;
+
+        toggleCombatUI(true);
+
+        logMessage(data.message, "red");
+
+        game.currentEnemy = data.currentEnemy;
+
+        updateEnemyUI();
+
+        myBtn.disabled = false;
+        myBtn.style.color = "";
+      } else {
+        // Выводим серый текст ТОЛЬКО если это не засада
+        logMessage(data.message, "#C0C0C0");
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -486,11 +576,41 @@ moveSouth.addEventListener("click", async () => {
     const data = await apiMove("south");
 
     if (data.success) {
-      logMessage(data.message, "#C0C0C0");
-
       if (data.goldLeft !== undefined) {
         game.hero.gold = data.goldLeft;
         updateHeroUI();
+      }
+
+      // Рендер карты
+      try {
+        const mapResponse = await apiGetMap();
+
+        renderMap(
+          mapResponse.map,
+          mapResponse.discoveredMap,
+          mapResponse.heroX,
+          mapResponse.heroY,
+        );
+      } catch (e) {
+        console.error("Load map failed: ", e);
+      }
+
+      if (data.battleStarted) {
+        game.state = GAME_STATE.BATTLE;
+
+        toggleCombatUI(true);
+
+        logMessage(data.message, "red");
+
+        game.currentEnemy = data.currentEnemy;
+
+        updateEnemyUI();
+
+        myBtn.disabled = false;
+        myBtn.style.color = "";
+      } else {
+        // Выводим серый текст ТОЛЬКО если это не засада
+        logMessage(data.message, "#C0C0C0");
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -505,11 +625,41 @@ moveEast.addEventListener("click", async () => {
     const data = await apiMove("east");
 
     if (data.success) {
-      logMessage(data.message, "#C0C0C0");
-
       if (data.goldLeft !== undefined) {
         game.hero.gold = data.goldLeft;
         updateHeroUI();
+      }
+
+      // Рендер карты
+      try {
+        const mapResponse = await apiGetMap();
+
+        renderMap(
+          mapResponse.map,
+          mapResponse.discoveredMap,
+          mapResponse.heroX,
+          mapResponse.heroY,
+        );
+      } catch (e) {
+        console.error("Load map failed: ", e);
+      }
+
+      if (data.battleStarted) {
+        game.state = GAME_STATE.BATTLE;
+
+        toggleCombatUI(true);
+
+        logMessage(data.message, "red");
+
+        game.currentEnemy = data.currentEnemy;
+
+        updateEnemyUI();
+
+        myBtn.disabled = false;
+        myBtn.style.color = "";
+      } else {
+        // Выводим серый текст ТОЛЬКО если это не засада
+        logMessage(data.message, "#C0C0C0");
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -524,11 +674,41 @@ moveWest.addEventListener("click", async () => {
     const data = await apiMove("west");
 
     if (data.success) {
-      logMessage(data.message, "#C0C0C0");
-
       if (data.goldLeft !== undefined) {
         game.hero.gold = data.goldLeft;
         updateHeroUI();
+      }
+
+      // Рендер карты
+      try {
+        const mapResponse = await apiGetMap();
+
+        renderMap(
+          mapResponse.map,
+          mapResponse.discoveredMap,
+          mapResponse.heroX,
+          mapResponse.heroY,
+        );
+      } catch (e) {
+        console.error("Load map failed: ", e);
+      }
+
+      if (data.battleStarted) {
+        game.state = GAME_STATE.BATTLE;
+
+        toggleCombatUI(true);
+
+        logMessage(data.message, "red");
+
+        game.currentEnemy = data.currentEnemy;
+
+        updateEnemyUI();
+
+        myBtn.disabled = false;
+        myBtn.style.color = "";
+      } else {
+        // Выводим серый текст ТОЛЬКО если это не засада
+        logMessage(data.message, "#C0C0C0");
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -590,8 +770,8 @@ myBtn.addEventListener("click", async () => {
       );
 
       const percNewEnemyHp =
-        (game.currentEnemy.hp / (game.currentEnemy.maxHp * game.level)) * 100;
-      myHpBar.style.width = `${percNewEnemyHp}%`;
+        (game.currentEnemy.hp / game.currentEnemy.maxHp) * 100;
+      enemyHpBar.style.width = `${percNewEnemyHp}%`;
 
       game.isProccessingTurn = true;
       toggleControls(true);
@@ -603,21 +783,16 @@ myBtn.addEventListener("click", async () => {
 
         game.isProccessingTurn = false;
 
+        toggleControls(false);
+
         if (
-          game.state === GAME_STATE.PLAYING ||
+          game.state === GAME_STATE.GAME_OVER ||
           game.state === GAME_STATE.VICTORY
         ) {
           toggleControls(false);
 
-          if (game.state === GAME_STATE.VICTORY) {
-            myBtn.disabled = true;
-            myBtn.style.color = "#BBB";
-          }
-        } else {
-          toggleControls(false);
-
           myBtn.disabled = true;
-          buyBtn.disabled = true;
+          myBtn.style.color = "#BBB";
         }
 
         saveGame();
@@ -632,7 +807,30 @@ myBtn.addEventListener("click", async () => {
 });
 
 // Кнопка рестарта игры
-myRestart.addEventListener("click", initGame);
+myRestart.addEventListener("click", async () => {
+  try {
+    const data = await apiHealHero();
+    console.log(data.message);
+
+    game.state = GAME_STATE.PLAYING;
+    game.hero.hp = game.hero.maxHp;
+
+    updateHeroUI();
+    toggleCombatUI(false);
+    toggleControls(false);
+
+    logMessage(
+      "The Gods gave you a second chance. You can go now. The next time your death will be real.",
+      "#1e90ff",
+      "bold",
+    );
+
+    await saveGame();
+  } catch (e) {
+    console.error("Failed to restart: ", e);
+    logMessage("Restart failed. Server offline.", "red");
+  }
+});
 
 // Кнопка ресета игры
 myResStat.addEventListener("click", resetProgress);
@@ -654,15 +852,6 @@ sellBtn.addEventListener("click", () => {
   }
 });
 
-// Выбор врага
-enemySelect.addEventListener("change", () => {
-  const enemyIndex = parseInt(enemySelect.value);
-
-  game.currentEnemy = game.enemies[enemyIndex];
-
-  initGame();
-});
-
 // Сохранение и загрузка игры
 const saveGame = async () => {
   const payload = {
@@ -682,6 +871,12 @@ const saveGame = async () => {
 const loadGame = async () => {
   try {
     const data = await apiLoadGame();
+
+    game.state = data.state;
+
+    if (data.currentEnemy) {
+      game.currentEnemy = data.currentEnemy;
+    }
 
     game.level = data.level;
     lvlIndicator.innerText = game.level;

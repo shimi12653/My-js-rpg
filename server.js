@@ -5,7 +5,7 @@ import cors from "cors";
 import fs from "fs";
 import { Game } from "./Game.js"; // 1. Импортируем нашу игру
 import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с null
-import { ITEMS, SETTINGS } from "./constants.js";
+import { GAME_STATE, ITEMS, SETTINGS } from "./constants.js";
 import {
   Weapon,
   FireStaff,
@@ -24,6 +24,8 @@ import {
   WhisperingBoneBow,
   AshenWraithLongbow,
 } from "./weapon.js";
+import { levelOneMap } from "./maps.js";
+import { ENEMIES_DB } from "./enemies.js";
 
 const app = express();
 const PORT = 3000;
@@ -117,8 +119,10 @@ if (fs.existsSync(DB)) {
   console.log("Database is not found.");
 }
 
-// Для консоли прописал стокового врага
-myGame.currentEnemy = new Enemy("Server Goblin", 100, 10);
+// Дефолтный враг
+if (!myGame.currentEnemy) {
+  myGame.currentEnemy = new Enemy("Goblin", 100, 10);
+}
 
 // Главная страница
 app.get("/", (req, res) => {
@@ -139,7 +143,7 @@ app.get("/game-status", (req, res) => {
   });
 });
 
-// система дропа
+// Система дропа
 app.get("/generate-loot", (req, res) => {
   let droppedItem = null;
   let message = "No loot found.";
@@ -165,7 +169,7 @@ app.get("/generate-loot", (req, res) => {
   });
 });
 
-// метод атаки (враг и герой)
+// Метод атаки (враг и герой)
 app.get("/enemy-attack", (req, res) => {
   let burnMessage = "";
   let isDodged = false;
@@ -220,6 +224,11 @@ app.get("/enemy-attack", (req, res) => {
     burnMessage: burnMessage,
     isDodged: isDodged,
   });
+});
+
+// Список врагов для фронта
+app.get("/enemies", (req, res) => {
+  res.json(ENEMIES_DB);
 });
 
 app.get("/hit", (req, res) => {
@@ -316,13 +325,21 @@ app.get("/bomb", (req, res) => {
 
 // Преедвижение на сервере
 app.get("/move", (req, res) => {
+  // Проверка боя (нельзя убежать)
+  if (myGame.state === GAME_STATE.BATTLE) {
+    return res.json({
+      success: false,
+      message: "No way go back. Fight!",
+    });
+  }
+
   const direction = req.query.dir;
   const validDir = ["north", "south", "east", "west"];
 
   if (!validDir.includes(direction)) {
     return res.json({
       success: false,
-      message: `Invalid direction:`,
+      message: `Invalid direction.`,
     });
   }
 
@@ -334,6 +351,7 @@ app.get("/move", (req, res) => {
   if (direction === "east") nextX += 1;
   if (direction === "west") nextX -= 1;
 
+  // Ограничиваем провал в бездну
   if (
     nextY < 0 ||
     nextX < 0 ||
@@ -364,15 +382,45 @@ app.get("/move", (req, res) => {
 
     myGame.map[nextY][nextX] = 1; // Сундук становится обычной клеткой
 
+    myGame.updateVision();
+
     return res.json({
       success: true,
       message: "You found a chest with gold! +150 coins to your balance.",
       goldLeft: myGame.hero.gold,
     });
+  } else if (isThatWall === 3) {
+    myGame.hero.x = nextX;
+    myGame.hero.y = nextY;
+
+    myGame.map[nextY][nextX] = 1;
+
+    myGame.state = GAME_STATE.BATTLE;
+
+    const randomIndex = Math.floor(Math.random() * ENEMIES_DB.length);
+    const template = ENEMIES_DB[randomIndex];
+
+    myGame.currentEnemy = new Enemy(
+      template.name,
+      template.hp,
+      template.damage,
+      template.img,
+    );
+
+    myGame.updateVision();
+
+    return res.json({
+      success: true,
+      message: `A wild ${template.name} jumps out of the shadows!`,
+      battleStarted: true,
+      currentEnemy: myGame.currentEnemy,
+    });
   }
 
   myGame.hero.x = nextX;
   myGame.hero.y = nextY;
+
+  myGame.updateVision();
 
   res.json({
     success: true,
@@ -381,9 +429,19 @@ app.get("/move", (req, res) => {
   });
 });
 
-// операции со статистикой героя (исцеление, сброс и повышение уровня)
+app.get("/map", (req, res) => {
+  res.json({
+    map: myGame.map,
+    heroX: myGame.hero.x,
+    heroY: myGame.hero.y,
+    discoveredMap: myGame.discoveredMap,
+  });
+});
+
+// Операции со статистикой героя (исцеление, сброс и повышение уровня)
 app.get("/heal-hero", (req, res) => {
   myGame.hero.hp = myGame.hero.maxHp;
+  myGame.state = GAME_STATE.PLAYING;
 
   res.json({
     message: "Hero was healed on server.",
@@ -392,6 +450,9 @@ app.get("/heal-hero", (req, res) => {
 });
 
 app.get("/reset-hero", (req, res) => {
+  myGame.state = GAME_STATE.PLAYING;
+  myGame.currentEnemy = null;
+
   myGame.hero.hp = 100;
   myGame.hero.maxHp = 100;
   myGame.hero.damage = 5;
@@ -399,6 +460,15 @@ app.get("/reset-hero", (req, res) => {
   myGame.hero.gold = 0;
   myGame.hero.mana = SETTINGS.HERO_MAX_MANA;
   myGame.hero.weapons = []; // Очищаем массив при ресете
+
+  myGame.hero.x = 1;
+  myGame.hero.y = 1;
+
+  myGame.map = levelOneMap.map((row) => [...row]);
+
+  myGame.discoveredMap = levelOneMap.map((row) => row.map(() => false));
+
+  myGame.updateVision();
 
   res.json({
     message: "Hero stats was successfully reset to default.",
@@ -414,25 +484,44 @@ app.get("/level-up", (req, res) => {
   if (newHp) myGame.hero.hp = newHp;
   if (newDamage) myGame.hero.damage = newDamage;
 
+  myGame.state = GAME_STATE.PLAYING;
+
   res.json({
     message: "Hero leveled up. Server wrote it.",
     heroStats: myGame.hero,
   });
 });
 
-// синхронизация фронт-энда и бэк-энда (враг и герой)
+// Синхронизация фронт-энда и бэк-энда (враг и герой)
 app.get("/sync", (req, res) => {
-  const syncEnemyHp = parseInt(req.query.hp) || 100;
-  const syncEnemyName = req.query.name || "Unknown";
-  const syncEnemyDamage = parseInt(req.query.damage) || 10;
+  const enemyIndex = parseInt(req.query.index) || 0;
+  const template = ENEMIES_DB[enemyIndex];
 
-  myGame.currentEnemy.hp = syncEnemyHp;
-  myGame.currentEnemy.maxHp = syncEnemyHp;
-  myGame.currentEnemy.name = syncEnemyName;
-  myGame.currentEnemy.damage = syncEnemyDamage;
+  if (!template) {
+    return res.json({
+      success: false,
+      message: "Enemy not found in database.",
+    });
+  }
+
+  if (!myGame.currentEnemy) {
+    myGame.currentEnemy = new Enemy(
+      template.name,
+      template.hp,
+      template.damage,
+      template.img,
+    );
+  } else {
+    myGame.currentEnemy.name = template.name;
+    myGame.currentEnemy.hp = template.hp;
+    myGame.currentEnemy.maxHp = template.hp;
+    myGame.currentEnemy.damage = template.damage;
+    myGame.currentEnemy.img = template.img;
+  }
 
   res.json({
-    message: "Server synchronized. New enemy ready to fight.",
+    success: true,
+    message: "Server authorized new enemy.",
     enemyStatus: myGame.currentEnemy,
   });
 });
@@ -782,7 +871,7 @@ app.get("/use-item", (req, res) => {
     isEnemyDead: isEnemyDead,
     inventory: myGame.inventory,
     heroStats: myGame.hero,
-    enemyHpLeft: myGame.currentEnemy.hp,
+    enemyHpLeftL: myGame.currentEnemy ? myGame.currentEnemy : 0,
   });
 });
 
@@ -872,6 +961,8 @@ app.post("/save-game", (req, res) => {
 
 app.get("/load-game", (req, res) => {
   res.json({
+    state: myGame.state,
+    currentEnemy: myGame.currentEnemy,
     level: myGame.level || 1,
     inventory: myGame.inventory || [],
     heroStats: {

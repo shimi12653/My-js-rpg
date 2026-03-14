@@ -74,39 +74,38 @@
         </div>
 
         <div class="arena-panel">
-          <label>Choose your enemy:</label>
-          <select id="enemy-select" style="margin-bottom: 10px">
-            <option value="0">Goblin (Easy)</option>
-            <option value="1">Orc (Medium)</option>
-            <option value="2">Dragon (Hard)</option>
-          </select>
-
-          <img
-            id="enemy-img"
-            src=""
-            alt="Enemy"
-            style="
-              width: 200px;
-              height: 200px;
-              object-fit: cover;
-              border: 2px solid black;
-            "
-          />
-
-          <h2>Enemy HP: <span id="enemy-hp">100</span></h2>
-          <div class="hp-bar-container">
-            <div
-              id="hp-bar"
+          <!-- display: none == панель скрыта от пользователя -->
+          <div id="combat-panel" style="display: none">
+            <img
+              id="enemy-img"
+              src=""
+              alt="Enemy"
               style="
-                width: 100%;
-                height: 100%;
-                background-color: limegreen;
-                transition: width 0.3s;
+                width: 200px;
+                height: 200px;
+                object-fit: cover;
+                border: 2px solid black;
               "
-            ></div>
+            />
+
+            <h2>Enemy HP: <span id="enemy-hp">100</span></h2>
+            <div class="hp-bar-container">
+              <div
+                id="enemy-hp-bar"
+                style="
+                  width: 100%;
+                  height: 100%;
+                  background-color: limegreen;
+                  transition: width 0.3s;
+                "
+              ></div>
+            </div>
+
+            <button id="attack-btn">ATTACK!</button>
           </div>
 
-          <button id="attack-btn">ATTACK!</button>
+          <div id="mini-map"></div>
+
           <button id="restart-btn">Play Again</button>
           <button id="reset-btn">Reset Stats</button>
 

@@ -107,6 +107,12 @@ li:active {
   margin-bottom: 15px;
 }
 
+#mini-map {
+  display: grid;
+  grid-template-columns: repeat(5, 20px); /*5 колонок по 20 пикселей*/
+  gap: 2px; /*расстояние между клеточками*/
+}
+
 #hero-hp-bar {
   /*Обращение к определённому id*/
   background-color: #cc0000;

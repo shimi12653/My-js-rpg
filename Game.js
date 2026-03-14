@@ -1,6 +1,7 @@
 import { Hero } from "./Hero.js";
 import { GAME_STATE } from "./constants.js";
 import { ITEMS } from "./constants.js";
+import { levelOneMap } from "./maps.js";
 
 export class Game {
   constructor() {
@@ -11,16 +12,10 @@ export class Game {
     this.state = GAME_STATE.PLAYING;
     this.isProccessingTurn = false;
     this.inventory = [];
-
-    // Карта подземелия
-    // 0 - на сервере стена, 1 - пол, 2 - сундук с золотом
-    this.map = [
-      [0, 0, 0, 0, 0],
-      [0, 1, 1, 1, 0],
-      [0, 1, 0, 1, 0],
-      [0, 1, 1, 2, 0],
-      [0, 0, 0, 0, 0],
-    ];
+    this.map = levelOneMap.map((row) => [...row]);
+    // Видимая игроку карта (false - не видно, true - видно)
+    this.discoveredMap = levelOneMap.map((row) => row.map(() => false));
+    this.updateVision();
   }
 
   reset() {
@@ -42,5 +37,31 @@ export class Game {
 
     this.state = GAME_STATE.PLAYING;
     this.isProccessingTurn = false;
+  }
+
+  updateVision() {
+    const x = this.hero.x;
+    const y = this.hero.y;
+
+    const maxY = this.map.length;
+    const maxX = this.map[0].length;
+
+    // Освещение клекти героя
+    this.discoveredMap[y][x] = true;
+
+    // Логика освещения (без освещения края карты)
+    // Тут else if писать нельзя, поскольку будет выполняться один блок, а не все
+    if (y > 0) {
+      this.discoveredMap[y - 1][x] = true; // Северная клетка
+    }
+    if (x > 0) {
+      this.discoveredMap[y][x - 1] = true; // Западная клетка
+    }
+    if (y < maxY - 1) {
+      this.discoveredMap[y + 1][x] = true; // Южная клетка
+    }
+    if (x < maxX - 1) {
+      this.discoveredMap[y][x + 1] = true; // Восточная клетка
+    }
   }
 }

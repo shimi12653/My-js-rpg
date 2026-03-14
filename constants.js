@@ -1,5 +1,6 @@
 export const GAME_STATE = {
   PLAYING: "PLAYING",
+  BATTLE: "BATTLE",
   GAME_OVER: "GAME_OVER",
   VICTORY: "VICTORY",
 };
