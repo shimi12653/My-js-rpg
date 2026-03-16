@@ -24,8 +24,8 @@ import {
   WhisperingBoneBow,
   AshenWraithLongbow,
 } from "./weapon.js";
-import { levelOneMap } from "./maps.js";
 import { ENEMIES_DB } from "./enemies.js";
+import { generateMap } from "./maps.js";
 
 const app = express();
 const PORT = 3000;
@@ -38,6 +38,23 @@ app.use(express.json());
 
 // Создаем игру один раз при запуске сервера
 const myGame = new Game();
+
+const mapWidth = SETTINGS.MAP_WIDTH;
+const mapHeight = SETTINGS.MAP_HEIGHT;
+
+const maxChests = SETTINGS.STARTING_CHESTS;
+const maxEnemies = SETTINGS.STARTING_ENEMIES;
+
+myGame.map = generateMap(mapWidth, mapHeight, 80, maxChests, maxEnemies);
+
+myGame.hero.x = Math.floor(mapWidth / 2);
+myGame.hero.y = Math.floor(mapHeight / 2);
+
+myGame.discoveredMap = Array(mapHeight)
+  .fill(0)
+  .map(() => Array(mapWidth).fill(false));
+
+myGame.updateVision();
 
 // Инициализация БД при старте сервера
 const DB = "temporary_database.json";
@@ -461,12 +478,20 @@ app.get("/reset-hero", (req, res) => {
   myGame.hero.mana = SETTINGS.HERO_MAX_MANA;
   myGame.hero.weapons = []; // Очищаем массив при ресете
 
-  myGame.hero.x = 1;
-  myGame.hero.y = 1;
+  const mapWidth = SETTINGS.MAP_WIDTH;
+  const mapHeight = SETTINGS.MAP_HEIGHT;
 
-  myGame.map = levelOneMap.map((row) => [...row]);
+  const maxChests = SETTINGS.STARTING_CHESTS;
+  const maxEnemies = SETTINGS.STARTING_ENEMIES;
 
-  myGame.discoveredMap = levelOneMap.map((row) => row.map(() => false));
+  myGame.map = generateMap(mapWidth, mapHeight, 80, maxChests, maxEnemies);
+
+  myGame.hero.x = Math.floor(mapWidth / 2);
+  myGame.hero.y = Math.floor(mapHeight / 2);
+
+  myGame.discoveredMap = Array(mapHeight)
+    .fill(0)
+    .map(() => Array(mapWidth).fill(false));
 
   myGame.updateVision();
 

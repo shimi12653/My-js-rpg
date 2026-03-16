@@ -18,6 +18,11 @@ export const ITEMS = {
 };
 
 export const SETTINGS = {
+  // Размеры карты
+  MAP_WIDTH: 15,
+  MAP_HEIGHT: 15,
+  STARTING_ENEMIES: 4,
+  STARTING_CHESTS: 3,
   // hero
   HERO_MAX_HP: 100,
   HEAL_AMOUNT: 20,
