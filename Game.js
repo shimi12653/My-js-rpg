@@ -1,10 +1,13 @@
 import { Hero } from "./Hero.js";
 import { GAME_STATE } from "./constants.js";
 import { ITEMS } from "./constants.js";
-import { levelOneMap } from "./maps.js";
 
 export class Game {
   constructor() {
+    if (Game.instance) {
+      return Game.instance;
+    }
+
     this.level = 1;
     this.hero = new Hero();
     this.enemies = [];
@@ -12,10 +15,10 @@ export class Game {
     this.state = GAME_STATE.PLAYING;
     this.isProccessingTurn = false;
     this.inventory = [];
-    this.map = levelOneMap.map((row) => [...row]);
-    // Видимая игроку карта (false - не видно, true - видно)
-    this.discoveredMap = levelOneMap.map((row) => row.map(() => false));
-    this.updateVision();
+    this.map = [];
+    this.discoveredMap = [];
+
+    Game.instance = this;
   }
 
   reset() {
@@ -40,6 +43,10 @@ export class Game {
   }
 
   updateVision() {
+    if (!this.map || this.map.length == 0 || !this.map[0]) {
+      return;
+    }
+
     const x = this.hero.x;
     const y = this.hero.y;
 

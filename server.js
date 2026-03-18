@@ -414,8 +414,10 @@ app.get("/move", (req, res) => {
 
     myGame.state = GAME_STATE.BATTLE;
 
-    const randomIndex = Math.floor(Math.random() * ENEMIES_DB.length);
-    const template = ENEMIES_DB[randomIndex];
+    const enemyKeys = Object.keys(ENEMIES_DB);
+    const randomIndex = Math.floor(Math.random * enemyKeys.length);
+    const randomEnemyName = enemyKeys[randomIndex];
+    const template = ENEMIES_DB[randomEnemyName];
 
     myGame.currentEnemy = new Enemy(
       template.name,
@@ -519,8 +521,9 @@ app.get("/level-up", (req, res) => {
 
 // Синхронизация фронт-энда и бэк-энда (враг и герой)
 app.get("/sync", (req, res) => {
+  const enemyKeys = Object.keys(ENEMIES_DB);
   const enemyIndex = parseInt(req.query.index) || 0;
-  const template = ENEMIES_DB[enemyIndex];
+  const template = ENEMIES_DB[enemyKeys[enemyIndex]];
 
   if (!template) {
     return res.json({
