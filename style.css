@@ -109,7 +109,7 @@ li:active {
 
 #mini-map {
   display: grid;
-  grid-template-columns: repeat(5, 20px); /*5 колонок по 20 пикселей*/
+  grid-template-columns: repeat(15, 20px); /* 15 колонок по 20пх каждая */
   gap: 2px; /*расстояние между клеточками*/
 }
 

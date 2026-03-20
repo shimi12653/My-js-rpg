@@ -95,9 +95,11 @@ const renderMap = (mapData, discoveredMap, heroX, heroY) => {
       if (!discoveredMap[y][x]) {
         div.style.backgroundColor = "#000000";
       } else {
-        // Закрашиваю стены и пол (сундуки, враги и тд - всё такого же цвета, как и пол)
+        // Закрашиваю стены, сундуки и пол (враги - всё такого же цвета, как и пол.)
         if (cell === 0) {
           div.style.backgroundColor = "#1c1c1c";
+        } else if (cell === 2) {
+          div.style.backgroundColor = "#ffd700";
         } else {
           div.style.backgroundColor = "#696969";
         }
@@ -902,14 +904,15 @@ const startApp = async () => {
 
     game.enemies = await apiFetchEnemies();
 
-    game.currentEnemy = game.enemies[0];
+    const firstEnemy = Object.keys(game.enemies)[0];
+    game.currentEnemy = game.enemies[firstEnemy];
 
     loadingScreen.style.display = "none";
     gameApp.style.display = "block"; // тут мы игру начинаем, блокируем её, то биш начинаем
 
     await loadGame();
 
-    if (!game.currentEnemy) game.currentEnemy = game.enemies[0];
+    if (!game.currentEnemy) game.currentEnemy = game.enemies[firstEnemy];
 
     initGame();
   } catch (e) {

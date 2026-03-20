@@ -1,6 +1,6 @@
 "use script";
 
-import express, { raw } from "express";
+import express from "express";
 import cors from "cors";
 import fs from "fs";
 import { Game } from "./Game.js"; // 1. Импортируем нашу игру
@@ -26,6 +26,7 @@ import {
 } from "./weapon.js";
 import { ENEMIES_DB } from "./enemies.js";
 import { generateMap } from "./maps.js";
+import { memoryUsage } from "process";
 
 const app = express();
 const PORT = 3000;
@@ -138,7 +139,14 @@ if (fs.existsSync(DB)) {
 
 // Дефолтный враг
 if (!myGame.currentEnemy) {
-  myGame.currentEnemy = new Enemy("Goblin", 100, 10);
+  const template = ENEMIES_DB["goblin"];
+
+  myGame.currentEnemy = new Enemy(
+    template.name,
+    template.hp,
+    template.damage,
+    template.img,
+  );
 }
 
 // Главная страница
@@ -415,7 +423,7 @@ app.get("/move", (req, res) => {
     myGame.state = GAME_STATE.BATTLE;
 
     const enemyKeys = Object.keys(ENEMIES_DB);
-    const randomIndex = Math.floor(Math.random * enemyKeys.length);
+    const randomIndex = Math.floor(Math.random() * enemyKeys.length);
     const randomEnemyName = enemyKeys[randomIndex];
     const template = ENEMIES_DB[randomEnemyName];
 
@@ -903,7 +911,7 @@ app.get("/use-item", (req, res) => {
   });
 });
 
-// Логка продажи инвентаря
+// Логика продажи инвентаря
 app.get("/sell-item", (req, res) => {
   const itemIndex = parseInt(req.query.index);
 

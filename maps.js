@@ -19,7 +19,7 @@ export const generateMap = (
   // 1 точка всегда пол
   map[minerY][minerX] = 1;
 
-  // Цикл для следующего метса появления
+  // Цикл для следующего места появления
   for (let x = 0; x <= maxSteps; x++) {
     const minerWay = Math.floor(Math.random() * 4);
 
