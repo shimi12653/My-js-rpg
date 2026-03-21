@@ -926,3 +926,37 @@ const startApp = async () => {
 };
 
 startApp();
+
+document.addEventListener("keydown", (event) => {
+  if (game.isProccessingTurn || isSellMode) return;
+
+  if (moveNorth.disabled) return;
+
+  const key = event.key.toLowerCase();
+
+  switch (key) {
+    case "w":
+    case "ц":
+    case "arrowup":
+      moveNorth.click();
+      break;
+
+    case "a":
+    case "ф":
+    case "arrowleft":
+      moveWest.click();
+      break;
+
+    case "s":
+    case "ы":
+    case "arrowdown":
+      moveSouth.click();
+      break;
+
+    case "d":
+    case "в":
+    case "arrowright":
+      moveEast.click();
+      break;
+  }
+});

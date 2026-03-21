@@ -36,7 +36,7 @@ export const ENEMIES_DB = {
     name: "Troll",
     hp: 200,
     damage: 25,
-    img: "https://pin.it/7aTuKXIW0",
+    img: "https://i.pinimg.com/736x/ab/dc/a6/abdca60cffacbec82002e9922869b78c.jpg",
   },
   dragon: {
     name: "Dragon",

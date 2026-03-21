@@ -46,7 +46,7 @@ const mapHeight = SETTINGS.MAP_HEIGHT;
 const maxChests = SETTINGS.STARTING_CHESTS;
 const maxEnemies = SETTINGS.STARTING_ENEMIES;
 
-myGame.map = generateMap(mapWidth, mapHeight, 80, maxChests, maxEnemies);
+myGame.map = generateMap(mapWidth, mapHeight, 0.4, maxChests, maxEnemies);
 
 myGame.hero.x = Math.floor(mapWidth / 2);
 myGame.hero.y = Math.floor(mapHeight / 2);
@@ -494,7 +494,7 @@ app.get("/reset-hero", (req, res) => {
   const maxChests = SETTINGS.STARTING_CHESTS;
   const maxEnemies = SETTINGS.STARTING_ENEMIES;
 
-  myGame.map = generateMap(mapWidth, mapHeight, 80, maxChests, maxEnemies);
+  myGame.map = generateMap(mapWidth, mapHeight, 0.4, maxChests, maxEnemies);
 
   myGame.hero.x = Math.floor(mapWidth / 2);
   myGame.hero.y = Math.floor(mapHeight / 2);
@@ -907,7 +907,7 @@ app.get("/use-item", (req, res) => {
     isEnemyDead: isEnemyDead,
     inventory: myGame.inventory,
     heroStats: myGame.hero,
-    enemyHpLeftL: myGame.currentEnemy ? myGame.currentEnemy : 0,
+    enemyHpLeft: myGame.currentEnemy ? myGame.currentEnemy.hp : 0,
   });
 });
 

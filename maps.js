@@ -1,77 +1,117 @@
 export const generateMap = (
   width,
   height,
-  maxSteps,
+  wallChance,
   chestCount,
   enemyCount,
 ) => {
-  const map = [];
-  // генерация уровней
+  let map = [];
+
+  // Первая генерация карты (случайная)
   for (let y = 0; y < height; y++) {
-    const row = new Array(width).fill(0);
-    map.push(row);
+    // сперва создаём строчку (у)
+    const row = [];
+    for (let x = 0; x < width; x++) {
+      // потом создаём столбик (х)
+      if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
+        row.push(0); // если это край карты - это 0
+      } else {
+        row.push(Math.random() < wallChance ? 0 : 1); // в другом случае - идёт рандом
+      }
+    }
+    map.push(row); // новую строчку кладём в карту
   }
 
-  // Размещаем "шахтёра" (алгоритм, который будет делать генерацию) в центр карты
-  let minerX = Math.floor(width / 2);
-  let minerY = Math.floor(height / 2);
+  // счётчик стен вокруг точки
+  const countAliveNeighbours = (mapX, mapY) => {
+    // Счётчик, который делает вокруг нас стены
+    let count = 0; // счётчик, который считает стены вокруг своей точки
+    for (let i = -1; i <= 1; i++) {
+      // шаг по оси х
+      for (let j = -1; j <= 1; j++) {
+        // шаг по оси у
+        if (i === 0 && j === 0) continue; // стоковая точка не считается
 
-  // 1 точка всегда пол
-  map[minerY][minerX] = 1;
+        let nearX = mapX + i; // координаты воркуг (по оси х)
+        let nearY = mapY + j; // по оси у
 
-  // Цикл для следующего места появления
-  for (let x = 0; x <= maxSteps; x++) {
-    const minerWay = Math.floor(Math.random() * 4);
-
-    let nextX = minerX;
-    let nextY = minerY;
-
-    switch (minerWay) {
-      case 0:
-        nextY -= 1;
-        break;
-      case 1:
-        nextY += 1;
-        break;
-      case 2:
-        nextX -= 1;
-        break;
-      case 3:
-        nextX += 1;
-        break;
+        if (nearX < 0 || nearY < 0 || nearX >= width || nearY >= height) {
+          count++; // края карты считаются за стены. Потому счётчик +
+        } else if (map[nearY][nearX] === 0) {
+          count++; // если есть рядом 0 - счётчик +
+        }
+      }
     }
+    return count;
+  };
 
-    // Проверка чтобы алгоритм не выходил за карту
-    if (nextX > 0 && nextX < width - 1 && nextY > 0 && nextY < height - 1) {
-      minerX = nextX;
-      minerY = nextY;
+  // Чистка генерации
+  const simulationSteps = 5; // какое кол-во чисток у нас будет (эволюций)
 
-      map[minerY][minerX] = 1;
+  for (let step = 0; step < simulationSteps; step++) {
+    const newMap = [];
+    for (let y = 0; y < height; y++) {
+      const newRow = [];
+      for (let x = 0; x < width; x++) {
+        const nears = countAliveNeighbours(x, y);
+
+        if (map[y][x] === 0) {
+          newRow.push(nears >= 4 ? 0 : 1); // условие для стены: если рядом минимум 4 стены - стена остаётся. Если нет - это пол
+        } else {
+          newRow.push(nears >= 5 ? 0 : 1); // условие для пола: если рядом минимум 5 стен - он становится камнем. Если нет - остаётся полом
+        }
+      }
+      newMap.push(newRow); // возвращаем в новую карту строчки
+    }
+    map = newMap; // новая карта становится нашей текущей
+  }
+
+  // Спавн колонн, одиночных стен (для интереса и разнообразия)
+  const pillarCount = 10; // сколько мы хотим стен сделать
+
+  for (let i = 0; i < pillarCount; i++) {
+    const randX = Math.floor(Math.random() * (width - 2)); // рандомная позиция на карте (касаясь краёв карты)
+    const randY = Math.floor(Math.random() * (height - 2));
+
+    if (map[randY][randX] === 1) {
+      map[randY][randX] = 0;
     }
   }
 
-  // Для спавна ивентов (бой, сундуки, тд)
+  // Чистим точки для нашего спавна
+  const startY = Math.floor(height / 2); // точки спавна
   const startX = Math.floor(width / 2);
-  const startY = Math.floor(height / 2);
 
-  // count - СКОЛЬКО штук ставить
-  // entityId - ЧТО ИМЕННО ставить (код 2 или 3)
+  for (let i = -1; i <= 1; i++) {
+    for (let j = -1; j <= 1; j++) {
+      map[startX + i][startY + j] = 1; // квадрат 3х3 вокруг точек спавна = 1
+    }
+  }
+
+  // Раскидка монстров и лута
   const spawnEntities = (count, entityId) => {
-    let spawned = 0; // Внутренний счетчик, никому снаружи не нужен
+    let spawned = 0; // Счётчик врагов (сколько заспавнилось)
+    let attempts = 0; // защита от зависания сервера
 
-    while (spawned < count) {
-      const randX = Math.floor(Math.random() * width);
-      const randY = Math.floor(Math.random() * height);
+    while (spawned < count && attempts < 1000) {
+      // Пока появившихся врагов < нашей переменной и переменной < 1000 делать цикл
+      const randX = Math.floor(Math.random() * width); // рандомный х
+      const randY = Math.floor(Math.random() * height); // рандомный н
 
-      if (map[randY][randX] === 1 && !(randX === startX && randY === startY)) {
-        map[randY][randX] = entityId; // Ставим правильный код объекта!
+      if (
+        map[randY][randX] === 1 &&
+        !(Math.abs(randX - startX) <= 1 && Math.abs(randY - startY) <= 1)
+      ) {
+        // если позиция карты 1 и не стоит ли далеко сундук или враг (Math.abs() - модуль числа, т.е. положительное значение)
+        map[randY][randX] = entityId; // даём сюда наше собитие (враг или сундук)
         spawned++;
       }
+      attempts++;
     }
   };
 
-  spawnEntities(chestCount, 2); // 2 штуки, код объекта 2 (Сундук)
-  spawnEntities(enemyCount, 3); // 5 штук, код объекта 3 (Враг)
+  spawnEntities(chestCount, 2);
+  spawnEntities(enemyCount, 3);
 
   return map;
 };
