@@ -46,16 +46,50 @@ const mapHeight = SETTINGS.MAP_HEIGHT;
 const maxChests = SETTINGS.STARTING_CHESTS;
 const maxEnemies = SETTINGS.STARTING_ENEMIES;
 
-myGame.map = generateMap(mapWidth, mapHeight, 0.4, maxChests, maxEnemies);
+// --- Floor / dungeon progression state ---
+myGame.floor = 1;
+myGame.floorMeta = null; // stairsPos, keyHolderPos, bossPos
+myGame.stairsUnlocked = false;
+myGame.activeEnemyContext = null; // { role: 'key' | 'normal' }
 
-myGame.hero.x = Math.floor(mapWidth / 2);
-myGame.hero.y = Math.floor(mapHeight / 2);
+const setupFloor = (floorNumber) => {
+  myGame.floor = floorNumber;
+  myGame.currentEnemy = null;
+  myGame.state = GAME_STATE.PLAYING;
+  myGame.activeEnemyContext = null;
 
-myGame.discoveredMap = Array(mapHeight)
-  .fill(0)
-  .map(() => Array(mapWidth).fill(false));
+  // Safe Zone: stairs unlocked by default.
+  myGame.stairsUnlocked = floorNumber === 4;
 
-myGame.updateVision();
+  const chestCountForFloor = floorNumber === 5 ? 0 : maxChests;
+  const enemyCountForFloor = floorNumber === 4 ? 0 : maxEnemies;
+
+  const result = generateMap(
+    mapWidth,
+    mapHeight,
+    0.4,
+    chestCountForFloor,
+    enemyCountForFloor,
+    floorNumber,
+  );
+
+  myGame.map = result.map;
+  myGame.hero.x = result.heroSpawn.x;
+  myGame.hero.y = result.heroSpawn.y;
+
+  myGame.floorMeta = {
+    stairsPos: result.stairsPos,
+    keyHolderPos: result.keyHolderPos,
+    bossPos: result.bossPos,
+  };
+
+  myGame.discoveredMap = Array(mapHeight)
+    .fill(0)
+    .map(() => Array(mapWidth).fill(false));
+  myGame.updateVision();
+};
+
+setupFloor(myGame.floor);
 
 // Инициализация БД при старте сервера
 const DB = "temporary_database.json";
@@ -414,6 +448,27 @@ app.get("/move", (req, res) => {
       message: "You found a chest with gold! +150 coins to your balance.",
       goldLeft: myGame.hero.gold,
     });
+  } else if (isThatWall === 4) {
+    // STAIRS_DOWN interaction: locked by default, unlocked after key-holder death
+    myGame.hero.x = nextX;
+    myGame.hero.y = nextY;
+    myGame.updateVision();
+
+    if (!myGame.stairsUnlocked) {
+      return res.json({
+        success: true,
+        message: "The stairs are locked. Find the Dungeon Key!",
+        currentPosition: { x: myGame.hero.x, y: myGame.hero.y },
+      });
+    }
+
+    const nextFloor = myGame.floor + 1;
+    setupFloor(nextFloor);
+
+    return res.json({
+      success: true,
+      message: `You descend to Floor ${nextFloor}.`,
+    });
   } else if (isThatWall === 3) {
     myGame.hero.x = nextX;
     myGame.hero.y = nextY;
@@ -422,23 +477,58 @@ app.get("/move", (req, res) => {
 
     myGame.state = GAME_STATE.BATTLE;
 
-    const enemyKeys = Object.keys(ENEMIES_DB);
-    const randomIndex = Math.floor(Math.random() * enemyKeys.length);
-    const randomEnemyName = enemyKeys[randomIndex];
-    const template = ENEMIES_DB[randomEnemyName];
+    const isBoss =
+      myGame.floorMeta?.bossPos &&
+      nextX === myGame.floorMeta.bossPos.x &&
+      nextY === myGame.floorMeta.bossPos.y;
 
-    myGame.currentEnemy = new Enemy(
-      template.name,
-      template.hp,
-      template.damage,
-      template.img,
-    );
+    const isKeyHolder =
+      myGame.floorMeta?.keyHolderPos &&
+      nextX === myGame.floorMeta.keyHolderPos.x &&
+      nextY === myGame.floorMeta.keyHolderPos.y;
+
+    myGame.activeEnemyContext = {
+      role: isKeyHolder ? "key" : "normal",
+      isBoss: Boolean(isBoss),
+    };
+
+    let template = null;
+    if (isBoss) {
+      template = ENEMIES_DB.dragon;
+
+      // Boss stats: significantly higher than a normal dragon
+      const bossHp = Math.floor(template.hp * 2 + myGame.floor * 120);
+      const bossDamage = Math.floor(template.damage * 2 + myGame.floor * 20);
+
+      myGame.currentEnemy = new Enemy(
+        template.name,
+        bossHp,
+        bossDamage,
+        template.img,
+      );
+    } else {
+      const enemyKeys = Object.keys(ENEMIES_DB);
+      const randomIndex = Math.floor(Math.random() * enemyKeys.length);
+      const randomEnemyName = enemyKeys[randomIndex];
+      template = ENEMIES_DB[randomEnemyName];
+
+      myGame.currentEnemy = new Enemy(
+        template.name,
+        template.hp,
+        template.damage,
+        template.img,
+      );
+    }
 
     myGame.updateVision();
 
     return res.json({
       success: true,
-      message: `A wild ${template.name} jumps out of the shadows!`,
+      message: isBoss
+        ? "A hellish Dragon steps forth to block your descent!"
+        : isKeyHolder
+          ? `A wild ${template.name} carries the Dungeon Key!`
+          : `A wild ${template.name} jumps out of the shadows!`,
       battleStarted: true,
       currentEnemy: myGame.currentEnemy,
     });
@@ -488,22 +578,7 @@ app.get("/reset-hero", (req, res) => {
   myGame.hero.mana = SETTINGS.HERO_MAX_MANA;
   myGame.hero.weapons = []; // Очищаем массив при ресете
 
-  const mapWidth = SETTINGS.MAP_WIDTH;
-  const mapHeight = SETTINGS.MAP_HEIGHT;
-
-  const maxChests = SETTINGS.STARTING_CHESTS;
-  const maxEnemies = SETTINGS.STARTING_ENEMIES;
-
-  myGame.map = generateMap(mapWidth, mapHeight, 0.4, maxChests, maxEnemies);
-
-  myGame.hero.x = Math.floor(mapWidth / 2);
-  myGame.hero.y = Math.floor(mapHeight / 2);
-
-  myGame.discoveredMap = Array(mapHeight)
-    .fill(0)
-    .map(() => Array(mapWidth).fill(false));
-
-  myGame.updateVision();
+  setupFloor(1);
 
   res.json({
     message: "Hero stats was successfully reset to default.",
@@ -521,9 +596,23 @@ app.get("/level-up", (req, res) => {
 
   myGame.state = GAME_STATE.PLAYING;
 
+  // Key unlock: when the key-holder enemy dies, unlock STAIRS_DOWN
+  let stairsMessage = "";
+  if (
+    myGame.activeEnemyContext?.role === "key" &&
+    myGame.stairsUnlocked === false
+  ) {
+    myGame.stairsUnlocked = true;
+    stairsMessage = " You found the Dungeon Key!";
+    console.log("You found the Dungeon Key!");
+  }
+
+  myGame.activeEnemyContext = null;
+
   res.json({
-    message: "Hero leveled up. Server wrote it.",
+    message: `Hero leveled up. Server wrote it.${stairsMessage}`,
     heroStats: myGame.hero,
+    stairsUnlocked: myGame.stairsUnlocked,
   });
 });
 

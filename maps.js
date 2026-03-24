@@ -1,117 +1,360 @@
+const TILE_WALL = 0;
+const TILE_FLOOR = 1;
+const TILE_CHEST = 2;
+const TILE_ENEMY = 3;
+const TILE_STAIRS_DOWN = 4;
+const TILE_SHOP_NPC = 5;
+
+const randInt = (min, maxInclusive) =>
+  Math.floor(Math.random() * (maxInclusive - min + 1)) + min;
+
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+const rectsOverlapWithMargin = (a, b, margin) => {
+  return !(
+    a.x + a.w + margin <= b.x - margin ||
+    a.x - margin >= b.x + b.w + margin ||
+    a.y + a.h + margin <= b.y - margin ||
+    a.y - margin >= b.y + b.h + margin
+  );
+};
+
+const carveRoom = (map, room) => {
+  for (let y = room.y; y < room.y + room.h; y++) {
+    for (let x = room.x; x < room.x + room.w; x++) {
+      map[y][x] = TILE_FLOOR;
+    }
+  }
+};
+
+const carveCorridor = (map, from, to) => {
+  const x1 = from.x;
+  const y1 = from.y;
+  const x2 = to.x;
+  const y2 = to.y;
+
+  // 1-cell wide L-corridor
+  const horizFirst = Math.random() < 0.5;
+
+  if (horizFirst) {
+    const dir = x2 >= x1 ? 1 : -1;
+    for (let x = x1; x !== x2 + dir; x += dir) map[y1][x] = TILE_FLOOR;
+    const dirY = y2 >= y1 ? 1 : -1;
+    for (let y = y1; y !== y2 + dirY; y += dirY) map[y][x2] = TILE_FLOOR;
+  } else {
+    const dirY = y2 >= y1 ? 1 : -1;
+    for (let y = y1; y !== y2 + dirY; y += dirY) map[y][x1] = TILE_FLOOR;
+    const dir = x2 >= x1 ? 1 : -1;
+    for (let x = x1; x !== x2 + dir; x += dir)
+      map[y2][x] = TILE_FLOOR;
+  }
+};
+
+const computeBfsDistances = (map, start) => {
+  const height = map.length;
+  const width = map[0].length;
+
+  const dist = Array(height)
+    .fill(0)
+    .map(() => Array(width).fill(-1));
+
+  const q = [];
+  dist[start.y][start.x] = 0;
+  q.push(start);
+
+  const dirs = [
+    { x: 1, y: 0 },
+    { x: -1, y: 0 },
+    { x: 0, y: 1 },
+    { x: 0, y: -1 },
+  ];
+
+  while (q.length) {
+    const cur = q.shift();
+    for (const d of dirs) {
+      const nx = cur.x + d.x;
+      const ny = cur.y + d.y;
+
+      if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
+      if (dist[ny][nx] !== -1) continue;
+
+      // Traversable: any non-wall
+      if (map[ny][nx] === TILE_WALL) continue;
+
+      dist[ny][nx] = dist[cur.y][cur.x] + 1;
+      q.push({ x: nx, y: ny });
+    }
+  }
+
+  return dist;
+};
+
+const getRoomCenter = (room) => ({
+  x: Math.floor(room.x + room.w / 2),
+  y: Math.floor(room.y + room.h / 2),
+});
+
+const pickRandomUnreservedTile = ({ map, candidates, reserved }) => {
+  const available = candidates.filter(
+    (p) => !reserved.has(`${p.x},${p.y}`),
+  );
+  if (available.length === 0) return null;
+  return available[Math.floor(Math.random() * available.length)];
+};
+
 export const generateMap = (
   width,
   height,
-  wallChance,
+  wallChance, // unused now, but kept for backward compatibility with server calls
   chestCount,
   enemyCount,
+  floor = 1,
 ) => {
-  let map = [];
+  const map = Array(height)
+    .fill(0)
+    .map(() => Array(width).fill(TILE_WALL));
 
-  // Первая генерация карты (случайная)
-  for (let y = 0; y < height; y++) {
-    // сперва создаём строчку (у)
-    const row = [];
-    for (let x = 0; x < width; x++) {
-      // потом создаём столбик (х)
-      if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
-        row.push(0); // если это край карты - это 0
-      } else {
-        row.push(Math.random() < wallChance ? 0 : 1); // в другом случае - идёт рандом
-      }
-    }
-    map.push(row); // новую строчку кладём в карту
+  // Special floors
+  const isBossFloor = floor === 5;
+  const isSafeFloor = floor === 4;
+
+  const rooms = [];
+  const margin = 1;
+
+  const canPlaceRooms = !isBossFloor;
+  const targetRooms = isBossFloor
+    ? 1
+    : Math.max(4, Math.min(8, Math.floor((width + height) / 6)));
+
+  const maxRoomTries = 250;
+  let tries = 0;
+
+  while (rooms.length < targetRooms && tries < maxRoomTries) {
+    tries++;
+
+    const roomW = randInt(3, isSafeFloor ? 6 : 7);
+    const roomH = randInt(3, isSafeFloor ? 6 : 7);
+
+    const x = randInt(1, width - roomW - 2);
+    const y = randInt(1, height - roomH - 2);
+
+    const newRoom = { x, y, w: roomW, h: roomH };
+
+    // Prevent too close overlaps to keep rooms readable
+    if (rooms.some((r) => rectsOverlapWithMargin(r, newRoom, margin))) continue;
+
+    rooms.push(newRoom);
   }
 
-  // счётчик стен вокруг точки
-  const countAliveNeighbours = (mapX, mapY) => {
-    // Счётчик, который делает вокруг нас стены
-    let count = 0; // счётчик, который считает стены вокруг своей точки
-    for (let i = -1; i <= 1; i++) {
-      // шаг по оси х
-      for (let j = -1; j <= 1; j++) {
-        // шаг по оси у
-        if (i === 0 && j === 0) continue; // стоковая точка не считается
+  // Fallback if room placement failed (small maps / unlucky RNG)
+  if (rooms.length === 0) {
+    rooms.push({
+      x: 2,
+      y: 2,
+      w: clamp(width - 4, 3, width - 4),
+      h: clamp(height - 4, 3, height - 4),
+    });
+  }
 
-        let nearX = mapX + i; // координаты воркуг (по оси х)
-        let nearY = mapY + j; // по оси у
+  // Floor 5: one large room
+  if (isBossFloor) {
+    rooms.length = 0;
+    const roomW = clamp(width - 6, 7, width - 2);
+    const roomH = clamp(height - 6, 7, height - 2);
 
-        if (nearX < 0 || nearY < 0 || nearX >= width || nearY >= height) {
-          count++; // края карты считаются за стены. Потому счётчик +
-        } else if (map[nearY][nearX] === 0) {
-          count++; // если есть рядом 0 - счётчик +
-        }
-      }
+    rooms.push({
+      x: Math.floor((width - roomW) / 2),
+      y: Math.floor((height - roomH) / 2),
+      w: roomW,
+      h: roomH,
+    });
+  }
+
+  // Carve all rooms
+  for (const room of rooms) carveRoom(map, room);
+
+  // Connect all rooms with a spanning corridor tree
+  if (rooms.length > 1) {
+    const centers = rooms.map(getRoomCenter);
+    for (let i = 1; i < centers.length; i++) {
+      // Connect each room to a previous random room => guaranteed connectivity
+      const parentIndex = randInt(0, i - 1);
+      carveCorridor(map, centers[i], centers[parentIndex]);
     }
-    return count;
-  };
+  }
 
-  // Чистка генерации
-  const simulationSteps = 5; // какое кол-во чисток у нас будет (эволюций)
+  // Hero spawn: first generated room center
+  let heroSpawn = getRoomCenter(rooms[0]);
+  if (isBossFloor) {
+    // Entrance: left side mid of the big room
+    const entranceY = rooms[0].y + Math.floor(rooms[0].h / 2);
+    heroSpawn = { x: rooms[0].x + 1, y: entranceY };
+  }
 
-  for (let step = 0; step < simulationSteps; step++) {
-    const newMap = [];
+  // BFS once to choose stairs (furthest from spawn via traversable tiles)
+  const dist = computeBfsDistances(map, heroSpawn);
+
+  // Choose STAIRS_DOWN
+  let stairsPos = null;
+  if (isBossFloor) {
+    // In a single-room boss fight we place stairs far away from hero and not on the boss
+    const bossPos = {
+      x: rooms[0].x + Math.floor(rooms[0].w / 2),
+      y: rooms[0].y + Math.floor(rooms[0].h / 2),
+    };
+
+    let best = null;
+    let bestD = -1;
     for (let y = 0; y < height; y++) {
-      const newRow = [];
       for (let x = 0; x < width; x++) {
-        const nears = countAliveNeighbours(x, y);
+        if (map[y][x] !== TILE_FLOOR) continue;
+        if (x === bossPos.x && y === bossPos.y) continue;
+        if (x === heroSpawn.x && y === heroSpawn.y) continue;
 
-        if (map[y][x] === 0) {
-          newRow.push(nears >= 4 ? 0 : 1); // условие для стены: если рядом минимум 4 стены - стена остаётся. Если нет - это пол
-        } else {
-          newRow.push(nears >= 5 ? 0 : 1); // условие для пола: если рядом минимум 5 стен - он становится камнем. Если нет - остаётся полом
+        const d = dist[y][x];
+        if (d > bestD) {
+          bestD = d;
+          best = { x, y };
         }
       }
-      newMap.push(newRow); // возвращаем в новую карту строчки
     }
-    map = newMap; // новая карта становится нашей текущей
-  }
 
-  // Спавн колонн, одиночных стен (для интереса и разнообразия)
-  const pillarCount = 10; // сколько мы хотим стен сделать
-
-  for (let i = 0; i < pillarCount; i++) {
-    const randX = Math.floor(Math.random() * (width - 2)); // рандомная позиция на карте (касаясь краёв карты)
-    const randY = Math.floor(Math.random() * (height - 2));
-
-    if (map[randY][randX] === 1) {
-      map[randY][randX] = 0;
-    }
-  }
-
-  // Чистим точки для нашего спавна
-  const startY = Math.floor(height / 2); // точки спавна
-  const startX = Math.floor(width / 2);
-
-  for (let i = -1; i <= 1; i++) {
-    for (let j = -1; j <= 1; j++) {
-      map[startX + i][startY + j] = 1; // квадрат 3х3 вокруг точек спавна = 1
-    }
-  }
-
-  // Раскидка монстров и лута
-  const spawnEntities = (count, entityId) => {
-    let spawned = 0; // Счётчик врагов (сколько заспавнилось)
-    let attempts = 0; // защита от зависания сервера
-
-    while (spawned < count && attempts < 1000) {
-      // Пока появившихся врагов < нашей переменной и переменной < 1000 делать цикл
-      const randX = Math.floor(Math.random() * width); // рандомный х
-      const randY = Math.floor(Math.random() * height); // рандомный н
-
-      if (
-        map[randY][randX] === 1 &&
-        !(Math.abs(randX - startX) <= 1 && Math.abs(randY - startY) <= 1)
-      ) {
-        // если позиция карты 1 и не стоит ли далеко сундук или враг (Math.abs() - модуль числа, т.е. положительное значение)
-        map[randY][randX] = entityId; // даём сюда наше собитие (враг или сундук)
-        spawned++;
+    stairsPos = best || getRoomCenter(rooms[0]);
+  } else {
+    // Furthest room by distance to its center
+    let bestRoom = null;
+    let bestD = -1;
+    for (const room of rooms) {
+      const c = getRoomCenter(room);
+      const d = dist[c.y]?.[c.x] ?? -1;
+      if (d > bestD) {
+        bestD = d;
+        bestRoom = room;
       }
-      attempts++;
     }
+    stairsPos = bestRoom ? getRoomCenter(bestRoom) : heroSpawn;
+  }
+
+  // Reserve tiles we don't want to overwrite later
+  const reserved = new Set();
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      reserved.add(`${heroSpawn.x + dx},${heroSpawn.y + dy}`);
+    }
+  }
+  reserved.add(`${stairsPos.x},${stairsPos.y}`);
+
+  // Place stairs on the map
+  map[stairsPos.y][stairsPos.x] = TILE_STAIRS_DOWN;
+
+  // Floor4: shop npc
+  let shopPos = null;
+  if (isSafeFloor) {
+    const candidates = [];
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        if (map[y][x] === TILE_FLOOR) candidates.push({ x, y });
+      }
+    }
+
+    shopPos = pickRandomUnreservedTile({
+      map,
+      candidates,
+      reserved,
+    });
+
+    if (shopPos) {
+      reserved.add(`${shopPos.x},${shopPos.y}`);
+      map[shopPos.y][shopPos.x] = TILE_SHOP_NPC;
+    }
+  }
+
+  // Chests
+  let finalChestCount = 0;
+  if (!isBossFloor) {
+    if (isSafeFloor) finalChestCount = Math.min(chestCount, 4);
+    else finalChestCount = chestCount;
+  }
+
+  const chestCandidates = [];
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      if (map[y][x] !== TILE_FLOOR) continue;
+      chestCandidates.push({ x, y });
+    }
+  }
+
+  const chests = [];
+  for (let i = 0; i < finalChestCount; i++) {
+    const pick = pickRandomUnreservedTile({
+      map,
+      candidates: chestCandidates,
+      reserved,
+    });
+    if (!pick) break;
+
+    reserved.add(`${pick.x},${pick.y}`);
+    chests.push(pick);
+    map[pick.y][pick.x] = TILE_CHEST;
+  }
+
+  // Enemies
+  let bossPos = null;
+  let keyHolderPos = null;
+
+  if (isBossFloor) {
+    bossPos = {
+      x: rooms[0].x + Math.floor(rooms[0].w / 2),
+      y: rooms[0].y + Math.floor(rooms[0].h / 2),
+    };
+
+    // Ensure we don't overwrite hero spawn
+    if (bossPos.x === heroSpawn.x && bossPos.y === heroSpawn.y) {
+      bossPos = { x: heroSpawn.x + 1, y: heroSpawn.y };
+    }
+
+    reserved.add(`${bossPos.x},${bossPos.y}`);
+    map[bossPos.y][bossPos.x] = TILE_ENEMY;
+
+    // Boss carries the key
+    keyHolderPos = { ...bossPos };
+  } else {
+    const effectiveEnemyCount = isSafeFloor ? 0 : Math.max(1, enemyCount);
+
+    const enemyCandidates = [];
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        if (map[y][x] !== TILE_FLOOR) continue;
+        enemyCandidates.push({ x, y });
+      }
+    }
+
+    const enemyPositions = [];
+    for (let i = 0; i < effectiveEnemyCount; i++) {
+      const pick = pickRandomUnreservedTile({
+        map,
+        candidates: enemyCandidates,
+        reserved,
+      });
+      if (!pick) break;
+
+      reserved.add(`${pick.x},${pick.y}`);
+      enemyPositions.push(pick);
+      map[pick.y][pick.x] = TILE_ENEMY;
+    }
+
+    if (!isSafeFloor && enemyPositions.length > 0) {
+      keyHolderPos = enemyPositions[randInt(0, enemyPositions.length - 1)];
+    }
+  }
+
+  return {
+    map,
+    heroSpawn,
+    stairsPos,
+    shopPos,
+    chests: chests,
+    bossPos,
+    keyHolderPos,
   };
-
-  spawnEntities(chestCount, 2);
-  spawnEntities(enemyCount, 3);
-
-  return map;
 };

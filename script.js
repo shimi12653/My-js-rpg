@@ -25,12 +25,10 @@ const myBtn = document.querySelector("#attack-btn");
 const mySpan = document.querySelector("#enemy-hp");
 const enemyHpBar = document.querySelector("#enemy-hp-bar");
 const myP = document.querySelector("#log");
-const myHpBar = document.querySelector("#hero-hp-bar");
 const myRestart = document.querySelector("#restart-btn");
 const myUl = document.querySelector("#inventory-list");
 const enemyImg = document.querySelector("#enemy-img");
 const lvlIndicator = document.querySelector("#game-level");
-const myResStat = document.querySelector("#reset-btn");
 const buyBtn = document.querySelector("#buy-bomb-btn");
 const loadingScreen = document.querySelector("#loading-screen");
 const gameApp = document.querySelector("#game-app");
@@ -449,7 +447,6 @@ const initGame = async () => {
     toggleCombatUI(false);
     toggleControls(true);
     myRestart.disabled = false;
-    myResStat.disabled = false;
     logMessage(`You are dead. Press 'Play Again' to restart.`, "red", "bold");
     updateHeroUI();
     return;
@@ -511,13 +508,11 @@ const toggleCombatUI = (isCombat) => {
 // Функция для блокировки интерфейса кнопок
 const toggleControls = (isDisabled) => {
   myBtn.disabled = isDisabled;
-  myResStat.disabled = isDisabled;
   myRestart.disabled = isDisabled;
   sellBtn.disabled = isDisabled;
   shopList.disabled = isDisabled;
 
   myBtn.style.color = isDisabled ? "#BBB" : "";
-  myResStat.style.color = isDisabled ? "#BBB" : "";
   myRestart.style.color = isDisabled ? "#BBB" : "";
   sellBtn.style.color = isDisabled ? "#BBB" : "";
   shopList.style.color = isDisabled ? "#BBB" : "";
@@ -810,32 +805,15 @@ myBtn.addEventListener("click", async () => {
 
 // Кнопка рестарта игры
 myRestart.addEventListener("click", async () => {
-  try {
-    const data = await apiHealHero();
-    console.log(data.message);
-
-    game.state = GAME_STATE.PLAYING;
-    game.hero.hp = game.hero.maxHp;
-
-    updateHeroUI();
-    toggleCombatUI(false);
-    toggleControls(false);
-
-    logMessage(
-      "The Gods gave you a second chance. You can go now. The next time your death will be real.",
-      "#1e90ff",
-      "bold",
-    );
-
-    await saveGame();
-  } catch (e) {
-    console.error("Failed to restart: ", e);
-    logMessage("Restart failed. Server offline.", "red");
-  }
+  logMessage(
+    "The Gods wipe your memory and send you back to the Abyss...",
+    "#1e90ff",
+    "bold",
+  );
+  await resetProgress();
+  toggleCombatUI(fasle);
+  saveGame();
 });
-
-// Кнопка ресета игры
-myResStat.addEventListener("click", resetProgress);
 
 // Кнопка продажи вещей
 sellBtn.addEventListener("click", () => {
