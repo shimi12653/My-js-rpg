@@ -53,22 +53,20 @@ export class Game {
     const maxY = this.map.length;
     const maxX = this.map[0].length;
 
-    // Освещение клекти героя
-    this.discoveredMap[y][x] = true;
+    const radius = 2; // просвет вокруг игрока
 
-    // Логика освещения (без освещения края карты)
-    // Тут else if писать нельзя, поскольку будет выполняться один блок, а не все
-    if (y > 0) {
-      this.discoveredMap[y - 1][x] = true; // Северная клетка
-    }
-    if (x > 0) {
-      this.discoveredMap[y][x - 1] = true; // Западная клетка
-    }
-    if (y < maxY - 1) {
-      this.discoveredMap[y + 1][x] = true; // Южная клетка
-    }
-    if (x < maxX - 1) {
-      this.discoveredMap[y][x + 1] = true; // Восточная клетка
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const checkY = y + dy;
+        const checkX = x + dx;
+
+        if (checkY >= 0 && checkY <= maxY && checkX >= 0 && checkX <= maxX) {
+          if (Math.abs(dx) + Math.abs(dy) <= radius + 1) {
+            // Просет ромбиком. Если хочешь квадратом - удали этот блок иф
+            this.discoveredMap[checkY][checkX] = true;
+          }
+        }
+      }
     }
   }
 }

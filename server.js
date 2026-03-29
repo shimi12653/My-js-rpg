@@ -508,8 +508,9 @@ app.get("/move", (req, res) => {
       );
     } else {
       const enemyKeys = Object.keys(ENEMIES_DB);
-      const randomIndex = Math.floor(Math.random() * enemyKeys.length);
+      const randomIndex = Math.floor(Math.random() * (enemyKeys.length - 1));
       const randomEnemyName = enemyKeys[randomIndex];
+
       template = ENEMIES_DB[randomEnemyName];
 
       myGame.currentEnemy = new Enemy(

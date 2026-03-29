@@ -45,8 +45,7 @@ const carveCorridor = (map, from, to) => {
     const dirY = y2 >= y1 ? 1 : -1;
     for (let y = y1; y !== y2 + dirY; y += dirY) map[y][x1] = TILE_FLOOR;
     const dir = x2 >= x1 ? 1 : -1;
-    for (let x = x1; x !== x2 + dir; x += dir)
-      map[y2][x] = TILE_FLOOR;
+    for (let x = x1; x !== x2 + dir; x += dir) map[y2][x] = TILE_FLOOR;
   }
 };
 
@@ -95,9 +94,7 @@ const getRoomCenter = (room) => ({
 });
 
 const pickRandomUnreservedTile = ({ map, candidates, reserved }) => {
-  const available = candidates.filter(
-    (p) => !reserved.has(`${p.x},${p.y}`),
-  );
+  const available = candidates.filter((p) => !reserved.has(`${p.x},${p.y}`));
   if (available.length === 0) return null;
   return available[Math.floor(Math.random() * available.length)];
 };
@@ -237,9 +234,10 @@ export const generateMap = (
 
   // Reserve tiles we don't want to overwrite later
   const reserved = new Set();
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
-      reserved.add(`${heroSpawn.x + dx},${heroSpawn.y + dy}`);
+  const startRoom = rooms[0];
+  for (let y = startRoom.y; y < startRoom.y + startRoom.h; y++) {
+    for (let x = startRoom.x; x < startRoom.x + startRoom.w; x++) {
+      reserved.add(`${x},${y}`);
     }
   }
   reserved.add(`${stairsPos.x},${stairsPos.y}`);

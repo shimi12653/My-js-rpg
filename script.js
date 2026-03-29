@@ -88,16 +88,21 @@ const renderMap = (mapData, discoveredMap, heroX, heroY) => {
       const div = document.createElement("div");
 
       // Выставляю стандартные настройки для дива
-      div.setAttribute("style", "width: 20px; height: 20px;");
+      div.setAttribute("style", "width: 15px; height: 15px;");
+      div.style.fontSize = "10px";
 
       if (!discoveredMap[y][x]) {
         div.style.backgroundColor = "#000000";
       } else {
-        // Закрашиваю стены, сундуки и пол (враги - всё такого же цвета, как и пол.)
+        // Закрашиваю события в их цвета
         if (cell === 0) {
           div.style.backgroundColor = "#1c1c1c";
         } else if (cell === 2) {
           div.style.backgroundColor = "#ffd700";
+        } else if (cell === 3) {
+          div.style.backgroundColor = "#800000";
+        } else if (cell === 4) {
+          div.style.backgroundColor = "#A0522D";
         } else {
           div.style.backgroundColor = "#696969";
         }
@@ -343,7 +348,7 @@ const handleVictory = async () => {
 
     const data = await apiLevelUp(newMaxHp, newHp, newDamage);
 
-    console.log("Server sync: ", data.message);
+    logMessage(data.message, "#F0FFFF");
 
     game.state = GAME_STATE.VICTORY;
     game.level = newLevel;
@@ -556,9 +561,6 @@ moveNorth.addEventListener("click", async () => {
 
         myBtn.disabled = false;
         myBtn.style.color = "";
-      } else {
-        // Выводим серый текст ТОЛЬКО если это не засада
-        logMessage(data.message, "#C0C0C0");
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -605,9 +607,6 @@ moveSouth.addEventListener("click", async () => {
 
         myBtn.disabled = false;
         myBtn.style.color = "";
-      } else {
-        // Выводим серый текст ТОЛЬКО если это не засада
-        logMessage(data.message, "#C0C0C0");
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -654,9 +653,6 @@ moveEast.addEventListener("click", async () => {
 
         myBtn.disabled = false;
         myBtn.style.color = "";
-      } else {
-        // Выводим серый текст ТОЛЬКО если это не засада
-        logMessage(data.message, "#C0C0C0");
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -703,9 +699,6 @@ moveWest.addEventListener("click", async () => {
 
         myBtn.disabled = false;
         myBtn.style.color = "";
-      } else {
-        // Выводим серый текст ТОЛЬКО если это не засада
-        logMessage(data.message, "#C0C0C0");
       }
     } else {
       logMessage(data.message, "#3b8898");
