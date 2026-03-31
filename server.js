@@ -507,11 +507,22 @@ app.get("/move", (req, res) => {
         template.img,
       );
     } else {
-      const enemyKeys = Object.keys(ENEMIES_DB);
-      const randomIndex = Math.floor(Math.random() * (enemyKeys.length - 1));
-      const randomEnemyName = enemyKeys[randomIndex];
+      const availableEnemies = Object.values(ENEMIES_DB).filter((enemy) => {
+        if (enemy.isBoss === false && enemy.tier <= myGame.floor) {
+          return true;
+        } else {
+          return false;
+        }
+      });
 
-      template = ENEMIES_DB[randomEnemyName];
+      /* 2 версия
+      const availableEnemies = Object.values(ENEMIES_DB).filter(enemy => !enemy.isBoss && enemy.tier <= myGame.floor)
+      Без return. Return спереди мы не пишем, если нету фигурных скобок. Если их нету - убери просто ретурн. Язык сам сделает его неявно
+      */
+
+      const randomIndex = Math.floor(Math.random() * availableEnemies.length);
+
+      const template = availableEnemies[randomIndex];
 
       myGame.currentEnemy = new Enemy(
         template.name,

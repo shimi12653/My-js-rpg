@@ -5,11 +5,14 @@ const TILE_ENEMY = 3;
 const TILE_STAIRS_DOWN = 4;
 const TILE_SHOP_NPC = 5;
 
+// Просто кидает кубик от а параметра до б параметра
 const randInt = (min, maxInclusive) =>
   Math.floor(Math.random() * (maxInclusive - min + 1)) + min;
 
+// Не даёт числу выходить за рамки (число - v, минимум дозвленный - min, макс дозволенный - max)
 const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
+// Смотрит за тем, чтобы комнаты были на нормальной дистанции и не наезжали друг на друга (не стояли близко, без маржин)
 const rectsOverlapWithMargin = (a, b, margin) => {
   return !(
     a.x + a.w + margin <= b.x - margin ||
@@ -19,6 +22,7 @@ const rectsOverlapWithMargin = (a, b, margin) => {
   );
 };
 
+// Превращает все 0 в 1
 const carveRoom = (map, room) => {
   for (let y = room.y; y < room.y + room.h; y++) {
     for (let x = room.x; x < room.x + room.w; x++) {
@@ -27,6 +31,7 @@ const carveRoom = (map, room) => {
   }
 };
 
+// Делает коридоры между комнатами
 const carveCorridor = (map, from, to) => {
   const x1 = from.x;
   const y1 = from.y;
@@ -49,6 +54,7 @@ const carveCorridor = (map, from, to) => {
   }
 };
 
+// Самая дальняя клетка - выход из подземелья (задача функции)
 const computeBfsDistances = (map, start) => {
   const height = map.length;
   const width = map[0].length;
@@ -88,10 +94,35 @@ const computeBfsDistances = (map, start) => {
   return dist;
 };
 
+// Размешает комнату по центру
 const getRoomCenter = (room) => ({
   x: Math.floor(room.x + room.w / 2),
   y: Math.floor(room.y + room.h / 2),
 });
+
+// Проверяет 8 клеток вокруг х,у на наличие tile
+const hasNeighbor = (map, cx, cy, tileType) => {
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dy === 0 && dx === 0) continue; // не чекаем самого себя
+
+      const checkY = cy + dy;
+      const checkX = cx + dx;
+
+      if (
+        checkY >= 0 &&
+        checkY < map.length &&
+        checkX >= 0 &&
+        checkX < map[0].length
+      ) {
+        if (map[checkY][checkX] === tileType) {
+          return true; // Есть рядом зарезерв клетка
+        }
+      }
+    }
+  }
+  return false; // Вокруг чисто
+};
 
 const pickRandomUnreservedTile = ({ map, candidates, reserved }) => {
   const available = candidates.filter((p) => !reserved.has(`${p.x},${p.y}`));
@@ -107,11 +138,13 @@ export const generateMap = (
   enemyCount,
   floor = 1,
 ) => {
+  // Берёт массив, заполняет нуллями
   const map = Array(height)
     .fill(0)
     .map(() => Array(width).fill(TILE_WALL));
 
   // Special floors
+  // Ставим флаги на 4 и 5 этажи
   const isBossFloor = floor === 5;
   const isSafeFloor = floor === 4;
 
@@ -126,6 +159,7 @@ export const generateMap = (
   const maxRoomTries = 250;
   let tries = 0;
 
+  // Генерирует случайные 8 штук комнат. 250 раз выдумывает коридоры и размер комнат
   while (rooms.length < targetRooms && tries < maxRoomTries) {
     tries++;
 
@@ -138,6 +172,7 @@ export const generateMap = (
     const newRoom = { x, y, w: roomW, h: roomH };
 
     // Prevent too close overlaps to keep rooms readable
+    // Проверяет у функции rectsOverlapWithMargin всё ли окей и можно ли продолжать
     if (rooms.some((r) => rectsOverlapWithMargin(r, newRoom, margin))) continue;
 
     rooms.push(newRoom);
@@ -153,7 +188,7 @@ export const generateMap = (
     });
   }
 
-  // Floor 5: one large room
+  // 5 этаж. Одна огромная комната
   if (isBossFloor) {
     rooms.length = 0;
     const roomW = clamp(width - 6, 7, width - 2);
@@ -167,10 +202,10 @@ export const generateMap = (
     });
   }
 
-  // Carve all rooms
+  // Делает Г-образные коридоры между комнатами (и в принципе комнаты)
   for (const room of rooms) carveRoom(map, room);
 
-  // Connect all rooms with a spanning corridor tree
+  // соединяет все комнаты
   if (rooms.length > 1) {
     const centers = rooms.map(getRoomCenter);
     for (let i = 1; i < centers.length; i++) {
@@ -180,7 +215,7 @@ export const generateMap = (
     }
   }
 
-  // Hero spawn: first generated room center
+  // Спавн героя первая сгенерированная комната
   let heroSpawn = getRoomCenter(rooms[0]);
   if (isBossFloor) {
     // Entrance: left side mid of the big room
@@ -188,7 +223,7 @@ export const generateMap = (
     heroSpawn = { x: rooms[0].x + 1, y: entranceY };
   }
 
-  // BFS once to choose stairs (furthest from spawn via traversable tiles)
+  // Считаем где же будет спавн лестницы
   const dist = computeBfsDistances(map, heroSpawn);
 
   // Choose STAIRS_DOWN
@@ -232,7 +267,7 @@ export const generateMap = (
     stairsPos = bestRoom ? getRoomCenter(bestRoom) : heroSpawn;
   }
 
-  // Reserve tiles we don't want to overwrite later
+  // Резервируем элементы, которые мы не хотим перезаписывать позже
   const reserved = new Set();
   const startRoom = rooms[0];
   for (let y = startRoom.y; y < startRoom.y + startRoom.h; y++) {
@@ -254,7 +289,7 @@ export const generateMap = (
         if (map[y][x] === TILE_FLOOR) candidates.push({ x, y });
       }
     }
-
+    // Берём все клетки, выкидываем оттуда все reserved, вставляем в рандом клетку сундук или врага. Потом добавляет в reserved её
     shopPos = pickRandomUnreservedTile({
       map,
       candidates,
@@ -284,15 +319,34 @@ export const generateMap = (
 
   const chests = [];
   for (let i = 0; i < finalChestCount; i++) {
-    const pick = pickRandomUnreservedTile({
-      map,
-      candidates: chestCandidates,
-      reserved,
-    });
-    if (!pick) break;
+    let pick = null;
+    let attempts = 0;
+
+    while (attempts < 50) {
+      // Пытаемся найти одинокое место (максимум 50 попыток)
+      pick = pickRandomUnreservedTile({
+        map,
+        candidates: chestCandidates,
+        reserved,
+      });
+
+      if (!pick) break;
+
+      // Если в радиусе 1 клетки НЕТ другого сундука - место найдено!
+      if (!hasNeighbor(map, pick.x, pick.y, TILE_CHEST)) {
+        break;
+      }
+
+      // Если сосед есть - забракуем точку и попробуем снова
+      pick = null;
+      attempts++;
+    }
+
+    // Если за 50 попыток так и не нашли пустого места - пропускаем сундук
+    if (!pick) continue;
 
     reserved.add(`${pick.x},${pick.y}`);
-    chests.push(pick);
+    chests.push(pick); // Заменили chestPositions на chests
     map[pick.y][pick.x] = TILE_CHEST;
   }
 
@@ -329,12 +383,32 @@ export const generateMap = (
 
     const enemyPositions = [];
     for (let i = 0; i < effectiveEnemyCount; i++) {
-      const pick = pickRandomUnreservedTile({
-        map,
-        candidates: enemyCandidates,
-        reserved,
-      });
-      if (!pick) break;
+      let pick = null;
+      let attempts = 0;
+
+      // Пытаемся найти одинокое место (максимум 50 попыток)
+      while (attempts < 50) {
+        // Убрали слово const
+        pick = pickRandomUnreservedTile({
+          map,
+          candidates: enemyCandidates,
+          reserved,
+        });
+
+        if (!pick) break;
+
+        // Если в радиусе 1 клетки НЕТ другого врага - место найдено!
+        if (!hasNeighbor(map, pick.x, pick.y, TILE_ENEMY)) {
+          break;
+        }
+
+        // Если сосед есть - забракуем точку и попробуем снова
+        pick = null;
+        attempts++;
+      }
+
+      // Если за 50 попыток так и не нашли пустого места - пропускаем этого моба
+      if (!pick) continue;
 
       reserved.add(`${pick.x},${pick.y}`);
       enemyPositions.push(pick);
