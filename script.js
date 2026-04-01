@@ -45,10 +45,16 @@ const moveSouth = document.querySelector("#btn-south");
 const moveEast = document.querySelector("#btn-east");
 const moveWest = document.querySelector("#btn-west");
 const miniMap = document.querySelector("#mini-map");
+const dungeonFloor = document.querySelector("#dungeon-floor");
 
 let isSellMode = false; // Состояние для продажи вещей
 
 const game = new Game();
+
+// Для логов (счётсчик логов и последнее сообщение)
+let lastLogMessage = "";
+
+let countLogMessages = 0;
 
 // Массив товаров в магазине
 const shopItems = [
@@ -61,20 +67,31 @@ const shopItems = [
   { name: ITEMS.BOW, price: SETTINGS.BOW_COST },
 ];
 
-// Обая функция логов
+// Обаятельная функция логов
 const logMessage = (text, color = "black", fontWeight = "normal") => {
-  const time = new Date().toLocaleTimeString();
-  const newLog = `[${time}] ${text}`;
+  if (text === lastLogMessage) {
+    countLogMessages++;
 
-  myP.innerHTML =
-    `<div style='color: ${color}; font-weight: ${fontWeight}'>${newLog}</div>` +
-    myP.innerHTML;
+    const time = new Date().toLocaleTimeString();
+    const newLog = `[${time}] ${text} (x${countLogMessages})`;
 
-  // Ограничение строк в логе
-  const maxLogs = 5;
+    myP.firstElementChild.innerHTML = newLog;
+  } else {
+    const time = new Date().toLocaleTimeString();
+    const newLog = `[${time}] ${text}`;
 
-  while (myP.children.length > maxLogs) {
-    myP.removeChild(myP.lastChild);
+    myP.innerHTML =
+      `<div style='color: ${color}; font-weight: ${fontWeight}'>${newLog}</div>` +
+      myP.innerHTML;
+
+    // Ограничение строк в логе
+    const maxLogs = 5;
+
+    while (myP.children.length > maxLogs) {
+      myP.removeChild(myP.lastChild);
+    }
+    lastLogMessage = text;
+    countLogMessages = 1;
   }
 };
 
@@ -562,6 +579,12 @@ moveNorth.addEventListener("click", async () => {
         myBtn.disabled = false;
         myBtn.style.color = "";
       }
+
+      // Переход на новый этаж
+      if (data.currentFloor) {
+        dungeonFloor.innerText = data.currentFloor;
+        logMessage(`You are on floor ${data.currentFloor}`, "#4169E1");
+      }
     } else {
       logMessage(data.message, "#3b8898");
     }
@@ -607,6 +630,12 @@ moveSouth.addEventListener("click", async () => {
 
         myBtn.disabled = false;
         myBtn.style.color = "";
+      }
+
+      // Переход на новый этаж
+      if (data.currentFloor) {
+        dungeonFloor.innerText = data.currentFloor;
+        logMessage(`You are on floor ${data.currentFloor}`, "#4169E1");
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -654,6 +683,12 @@ moveEast.addEventListener("click", async () => {
         myBtn.disabled = false;
         myBtn.style.color = "";
       }
+
+      // Переход на новый этаж
+      if (data.currentFloor) {
+        dungeonFloor.innerText = data.currentFloor;
+        logMessage(`You are on floor ${data.currentFloor}`, "#4169E1");
+      }
     } else {
       logMessage(data.message, "#3b8898");
     }
@@ -699,6 +734,12 @@ moveWest.addEventListener("click", async () => {
 
         myBtn.disabled = false;
         myBtn.style.color = "";
+      }
+
+      // Переход на новый этаж
+      if (data.currentFloor) {
+        dungeonFloor.innerText = data.currentFloor;
+        logMessage(`You are on floor ${data.currentFloor}`, "#4169E1");
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -851,6 +892,10 @@ const loadGame = async () => {
       game.currentEnemy = data.currentEnemy;
     }
 
+    if (data.currentFloor) {
+      dungeonFloor.innerText = data.currentFloor;
+    }
+
     game.level = data.level;
     lvlIndicator.innerText = game.level;
 
@@ -920,6 +965,7 @@ document.addEventListener("keydown", (event) => {
 
     case "s":
     case "ы":
+    case "і":
     case "arrowdown":
       moveSouth.click();
       break;

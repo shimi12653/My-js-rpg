@@ -26,7 +26,6 @@ import {
 } from "./weapon.js";
 import { ENEMIES_DB } from "./enemies.js";
 import { generateMap } from "./maps.js";
-import { memoryUsage } from "process";
 
 const app = express();
 const PORT = 3000;
@@ -468,6 +467,7 @@ app.get("/move", (req, res) => {
     return res.json({
       success: true,
       message: `You descend to Floor ${nextFloor}.`,
+      currentFloor: nextFloor,
     });
   } else if (isThatWall === 3) {
     myGame.hero.x = nextX;
@@ -522,7 +522,7 @@ app.get("/move", (req, res) => {
 
       const randomIndex = Math.floor(Math.random() * availableEnemies.length);
 
-      const template = availableEnemies[randomIndex];
+      template = availableEnemies[randomIndex];
 
       myGame.currentEnemy = new Enemy(
         template.name,
@@ -1100,7 +1100,7 @@ app.get("/load-game", (req, res) => {
   res.json({
     state: myGame.state,
     currentEnemy: myGame.currentEnemy,
-    level: myGame.level || 1,
+    currentFloor: myGame.floor,
     inventory: myGame.inventory || [],
     heroStats: {
       hp: myGame.hero.hp,
