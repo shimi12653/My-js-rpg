@@ -544,6 +544,26 @@ app.get("/move", (req, res) => {
       battleStarted: true,
       currentEnemy: myGame.currentEnemy,
     });
+  } else if (isThatWall === 5) {
+    return res.json({
+      success: false,
+      message: `Merchant: 'Got some rare things on sale, stranger! Check your shop panel.'`,
+      currentPosition: { x: myGame.hero.x, y: myGame.hero.y },
+    });
+  } else if (isThatWall === 6) {
+    myGame.hero.hp = myGame.hero.maxHp;
+    myGame.hero.mana = myGame.hero.maxMana;
+
+    myGame.hero.x = nextX;
+    myGame.hero.y = nextY;
+
+    myGame.updateVision();
+
+    return res.json({
+      success: true,
+      message: "You drink from the Holy Fountain. HP and Mana fully restored!",
+      heroStats: myGame.hero,
+    });
   }
 
   myGame.hero.x = nextX;
@@ -794,6 +814,7 @@ app.get("/buy-item", (req, res) => {
 });
 
 // Логика инвентаря
+// Использование предмета
 app.get("/use-item", (req, res) => {
   const itemIndex = parseInt(req.query.index);
 
@@ -1012,6 +1033,34 @@ app.get("/use-item", (req, res) => {
   });
 });
 
+// Снятие предмета с героя
+app.get("/unequip-item", (req, res) => {
+  const weaponIndex = parseInt(req.query.index);
+  if (
+    isNaN(weaponIndex) ||
+    weaponIndex >= myGame.hero.weapons.length ||
+    weaponIndex < 0
+  ) {
+    return res.json({
+      success: false,
+      message: "Weapon not found.",
+    });
+  }
+
+  const weaponToUnequip = myGame.hero.weapons[weaponIndex];
+
+  myGame.inventory.push(weaponToUnequip.name);
+  myGame.hero.weapons.splice(weaponIndex, 1);
+  myGame.hero.equippedWeapons -= weaponToUnequip.handsRequired;
+
+  res.json({
+    success: true,
+    message: `You unequipped ${weaponToUnequip.name}.`,
+    inventory: myGame.inventory,
+    heroStats: myGame.hero,
+  });
+});
+
 // Логика продажи инвентаря
 app.get("/sell-item", (req, res) => {
   const itemIndex = parseInt(req.query.index);
@@ -1101,6 +1150,7 @@ app.get("/load-game", (req, res) => {
     state: myGame.state,
     currentEnemy: myGame.currentEnemy,
     currentFloor: myGame.floor,
+    level: myGame.level || 1,
     inventory: myGame.inventory || [],
     heroStats: {
       hp: myGame.hero.hp,
@@ -1108,6 +1158,7 @@ app.get("/load-game", (req, res) => {
       damage: myGame.hero.damage,
       gold: myGame.hero.gold,
       equippedWeapons: myGame.hero.equippedWeapons,
+      weapons: myGame.hero.weapons,
     },
   });
 });

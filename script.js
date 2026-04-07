@@ -19,6 +19,7 @@ import {
   apiSellItem,
   apiMove,
   apiGetMap,
+  apiUnequipItem,
 } from "./network.js";
 
 const myBtn = document.querySelector("#attack-btn");
@@ -46,6 +47,7 @@ const moveEast = document.querySelector("#btn-east");
 const moveWest = document.querySelector("#btn-west");
 const miniMap = document.querySelector("#mini-map");
 const dungeonFloor = document.querySelector("#dungeon-floor");
+const equippedWeaponsList = document.querySelector("#equipped-weapons-list");
 
 let isSellMode = false; // Состояние для продажи вещей
 
@@ -120,6 +122,10 @@ const renderMap = (mapData, discoveredMap, heroX, heroY) => {
           div.style.backgroundColor = "#800000";
         } else if (cell === 4) {
           div.style.backgroundColor = "#A0522D";
+        } else if (cell === 5) {
+          div.style.backgroundColor = "#A52A2A";
+        } else if (cell === 6) {
+          div.style.backgroundColor = "#00FFFF";
         } else {
           div.style.backgroundColor = "#696969";
         }
@@ -141,12 +147,19 @@ const renderMap = (mapData, discoveredMap, heroX, heroY) => {
 };
 
 // Жизни и бар хп героя
-const updateHeroUI = () => {
+const updateHeroUI = (newStats) => {
+  if (newStats) {
+    if (newStats.hp !== undefined) game.hero.hp = newStats.hp;
+    if (newStats.mana !== undefined) game.hero.mana = newStats.mana;
+    if (newStats.gold !== undefined) game.hero.gold = newStats.gold;
+    if (newStats.equippedWeapons !== undefined)
+      game.hero.equippedWeapons = newStats.equippedWeapons;
+    if (newStats.weapons !== undefined) game.hero.weapons = newStats.weapons;
+  }
+
   heroHp.innerText = game.hero.hp;
   heroMp.innerText = game.hero.mana;
-
-  heroWeapons.innerText = `${game.hero.equippedWeapons}/${game.hero.maxHands}`;
-
+  heroWeapons.innerText = `${game.hero.equippedWeapons || 0}/${game.hero.maxHands}`;
   goldBalance.innerText = game.hero.gold;
 
   const hpPercent = Math.max(0, (game.hero.hp / game.hero.maxHp) * 100);
@@ -154,6 +167,42 @@ const updateHeroUI = () => {
 
   const mpPercent = Math.max(0, (game.hero.mana / game.hero.maxMana) * 100);
   heroMpBar.style.width = `${mpPercent}%`;
+
+  equippedWeaponsList.innerHTML = "";
+
+  if (game.hero.weapons && game.hero.weapons.length > 0) {
+    game.hero.weapons.forEach((weapon, index) => {
+      const wpnBtn = document.createElement("button");
+      wpnBtn.innerText = `[Снять] ${weapon.name} (${weapon.baseDamage} dmg)`;
+      wpnBtn.className = "weapon-btn"; // используется в будущем для добавления стилей css
+
+      wpnBtn.setAttribute("style", "margin-bottom: 10px; cursor: pointer;");
+
+      wpnBtn.onclick = () => unequipItem(index);
+
+      equippedWeaponsList.appendChild(wpnBtn);
+    });
+  }
+};
+
+// Снятие предмета с героя
+const unequipItem = async (index) => {
+  try {
+    const data = await apiUnequipItem(index);
+
+    if (data.success) {
+      updateHeroUI(data.heroStats);
+
+      game.inventory.length = 0;
+      game.inventory.push(...data.inventory);
+
+      renderInventory();
+
+      logMessage(data.message, "orange");
+    }
+  } catch (e) {
+    console.error("Failed to unequip item: ", e);
+  }
 };
 
 // Жизни и бар хп врага
@@ -271,6 +320,7 @@ const renderInventory = () => {
             game.hero.mana = data.heroStats.mana;
             game.hero.equippedWeapons = data.heroStats.equippedWeapons;
             game.currentEnemy.hp = data.enemyHpLeft;
+            game.hero.weapons = data.heroStats.weapons || [];
 
             logMessage(
               `Server: ${data.message}`,
@@ -551,6 +601,12 @@ moveNorth.addEventListener("click", async () => {
         updateHeroUI();
       }
 
+      // Если что-то произошло с пероснажем - обновляем статистику
+      if (data.heroStats) {
+        updateHeroUI(data.heroStats);
+        logMessage(data.message, "#00bfff");
+      }
+
       // Рендер карты
       try {
         const mapResponse = await apiGetMap();
@@ -601,6 +657,12 @@ moveSouth.addEventListener("click", async () => {
       if (data.goldLeft !== undefined) {
         game.hero.gold = data.goldLeft;
         updateHeroUI();
+      }
+
+      // Если что-то произошло с пероснажем - обновляем статистику
+      if (data.heroStats) {
+        updateHeroUI(data.heroStats);
+        logMessage(data.message, "#00bfff");
       }
 
       // Рендер карты
@@ -655,6 +717,12 @@ moveEast.addEventListener("click", async () => {
         updateHeroUI();
       }
 
+      // Если что-то произошло с пероснажем - обновляем статистику
+      if (data.heroStats) {
+        updateHeroUI(data.heroStats);
+        logMessage(data.message, "#00bfff");
+      }
+
       // Рендер карты
       try {
         const mapResponse = await apiGetMap();
@@ -705,6 +773,12 @@ moveWest.addEventListener("click", async () => {
       if (data.goldLeft !== undefined) {
         game.hero.gold = data.goldLeft;
         updateHeroUI();
+      }
+
+      // Если что-то произошло с пероснажем - обновляем статистику
+      if (data.heroStats) {
+        updateHeroUI(data.heroStats);
+        logMessage(data.message, "#00bfff");
       }
 
       // Рендер карты
@@ -896,7 +970,7 @@ const loadGame = async () => {
       dungeonFloor.innerText = data.currentFloor;
     }
 
-    game.level = data.level;
+    game.level = data.level || 1;
     lvlIndicator.innerText = game.level;
 
     game.inventory.length = 0;
@@ -907,6 +981,7 @@ const loadGame = async () => {
     game.hero.damage = data.heroStats.damage;
     game.hero.gold = data.heroStats.gold;
     game.hero.equippedWeapons = data.heroStats.equippedWeapons || 0;
+    game.hero.weapons = data.heroStats.weapons || [];
 
     console.log("Game loaded successfully.");
   } catch (e) {

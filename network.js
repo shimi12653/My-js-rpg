@@ -161,3 +161,13 @@ export const apiFetchEnemies = async () => {
     throw e;
   }
 };
+
+export const apiUnequipItem = async (index) => {
+  try {
+    const response = await fetch(`${BASE_URL}/unequip-item?index=${index}`);
+    return await response.json();
+  } catch (e) {
+    console.error("Network Error (unequip-item): ", e);
+    throw e;
+  }
+};

@@ -4,6 +4,7 @@ const TILE_CHEST = 2;
 const TILE_ENEMY = 3;
 const TILE_STAIRS_DOWN = 4;
 const TILE_SHOP_NPC = 5;
+const TILE_FONTAIN = 6;
 
 // Просто кидает кубик от а параметра до б параметра
 const randInt = (min, maxInclusive) =>
@@ -148,6 +149,50 @@ export const generateMap = (
   const isBossFloor = floor === 5;
   const isSafeFloor = floor === 4;
 
+  if (isSafeFloor) {
+    // Координаты, чтобы комнаты были всегда по центру и равны по расстоянию
+    const centerY = Math.floor(height / 2);
+    const spacing = Math.floor(width / 4);
+
+    // Фиксируем комнаты на одном и том же месте
+    const rooms = [
+      { x: spacing - 3, y: centerY - 3, w: 6, h: 6 },
+      { x: spacing * 2 - 3, y: centerY - 3, w: 6, h: 6 },
+      { x: spacing * 3 - 3, y: centerY - 3, w: 6, h: 6 },
+    ];
+
+    // Вырезаем комнаты на массиве нашем
+    for (const room of rooms) carveRoom(map, room);
+
+    // Прокладываем коридоры
+    carveCorridor(map, getRoomCenter(rooms[0]), getRoomCenter(rooms[1]));
+    carveCorridor(map, getRoomCenter(rooms[1]), getRoomCenter(rooms[2]));
+
+    // В левой комнате будет сразу спавн + фонтан
+    const heroSpawn = getRoomCenter(rooms[0]);
+    const fontainPos = { x: heroSpawn.x - 1, y: heroSpawn.y };
+    map[fontainPos.y][fontainPos.x] = TILE_FONTAIN;
+
+    // В центральной будет торговец
+    const shopPos = getRoomCenter(rooms[1]);
+    map[shopPos.y][shopPos.x] = TILE_SHOP_NPC;
+
+    // В правой будет спуск на следующий этаж
+    const stairsPos = getRoomCenter(rooms[2]);
+    map[stairsPos.y][stairsPos.x] = TILE_STAIRS_DOWN;
+
+    return {
+      map,
+      heroSpawn,
+      stairsPos,
+      shopPos,
+      fontainPos,
+      chests: [],
+      bossPos: null,
+      keyHolderPos: null,
+    };
+  }
+
   const rooms = [];
   const margin = 1;
 
@@ -280,28 +325,6 @@ export const generateMap = (
   // Place stairs on the map
   map[stairsPos.y][stairsPos.x] = TILE_STAIRS_DOWN;
 
-  // Floor4: shop npc
-  let shopPos = null;
-  if (isSafeFloor) {
-    const candidates = [];
-    for (let y = 1; y < height - 1; y++) {
-      for (let x = 1; x < width - 1; x++) {
-        if (map[y][x] === TILE_FLOOR) candidates.push({ x, y });
-      }
-    }
-    // Берём все клетки, выкидываем оттуда все reserved, вставляем в рандом клетку сундук или врага. Потом добавляет в reserved её
-    shopPos = pickRandomUnreservedTile({
-      map,
-      candidates,
-      reserved,
-    });
-
-    if (shopPos) {
-      reserved.add(`${shopPos.x},${shopPos.y}`);
-      map[shopPos.y][shopPos.x] = TILE_SHOP_NPC;
-    }
-  }
-
   // Chests
   let finalChestCount = 0;
   if (!isBossFloor) {
@@ -424,7 +447,6 @@ export const generateMap = (
     map,
     heroSpawn,
     stairsPos,
-    shopPos,
     chests: chests,
     bossPos,
     keyHolderPos,
