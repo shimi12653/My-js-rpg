@@ -119,6 +119,34 @@
         </div>
       </div>
 
+      <div id="game-over-screen" class="modal-screen hidden">
+        <h1 style="color: #ff3333; text-shadow: 2px 2px black">YOU DIED</h1>
+        <p style="color: white; font-size: 20px">
+          The dungeon claims another soul...
+        </p>
+        <button
+          id="modal-restart-btn"
+          class="weapon-btn"
+          style="margin-top: 20px; font-size: 18px; padding: 10px 20px"
+        >
+          Rise from the Abyss (Restart)
+        </button>
+      </div>
+
+      <div id="victory-screen" class="modal-screen hidden">
+        <h1 style="color: #ffd700; text-shadow: 2px 2px black">VICTORY!</h1>
+        <p style="color: white; font-size: 20px">
+          You have vanquished the dragon and conquered the dungeon!
+        </p>
+        <button
+          id="modal-victory-restart-btn"
+          class="weapon-btn"
+          style="margin-top: 20px; font-size: 18px; padding: 10px 20px"
+        >
+          Start new journey
+        </button>
+      </div>
+
       <script type="module" src="script.js"></script>
     </div>
   </body>

@@ -48,6 +48,12 @@ const moveWest = document.querySelector("#btn-west");
 const miniMap = document.querySelector("#mini-map");
 const dungeonFloor = document.querySelector("#dungeon-floor");
 const equippedWeaponsList = document.querySelector("#equipped-weapons-list");
+const gameOverScreen = document.querySelector("#game-over-screen");
+const victoryScreen = document.querySelector("#victory-screen");
+const modalRestartBtn = document.querySelector("#modal-restart-btn");
+const modalVictoryRestartBtn = document.querySelector(
+  "#modal-victory-restart-btn",
+);
 
 let isSellMode = false; // Состояние для продажи вещей
 
@@ -405,6 +411,10 @@ const handleVictory = async () => {
   enemyHpBar.style.width = "0%";
   toggleCombatUI(false);
 
+  if (dungeonFloor.innerText === "5") {
+    victoryScreen.classList.remove("hidden");
+  }
+
   try {
     await dropLoot();
 
@@ -489,6 +499,9 @@ const enemyAttack = async () => {
       myBtn.disabled = true;
       myBtn.style.color = "#BBB";
       logMessage("You died... Game over.", "red", "bold");
+
+      // Удаляем из текста экрана проигрыша hidden (чтобы экран не был скрыт)
+      gameOverScreen.classList.remove("hidden");
     }
   } catch (e) {
     logMessage("Server unavailable. Enemy missed.", "red");
@@ -919,7 +932,32 @@ myRestart.addEventListener("click", async () => {
     "bold",
   );
   await resetProgress();
-  toggleCombatUI(fasle);
+  toggleCombatUI(false);
+  saveGame();
+});
+
+// Кнопки на экранах смерти/победы
+modalRestartBtn.addEventListener("click", async () => {
+  gameOverScreen.classList.add("hidden");
+  logMessage(
+    "The Gods wipe your memory and send you back to the Abyss...",
+    "#1e90ff",
+    "bold",
+  );
+  await resetProgress();
+  toggleCombatUI(false);
+  saveGame();
+});
+
+modalVictoryRestartBtn.addEventListener("click", async () => {
+  victoryScreen.classList.add("hidden");
+  logMessage(
+    "A new hero enters the dungeon to seek glory...",
+    "#ffd700",
+    "bold",
+  );
+  await resetProgress();
+  toggleCombatUI(false);
   saveGame();
 });
 
