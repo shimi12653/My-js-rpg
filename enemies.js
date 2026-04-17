@@ -3,7 +3,7 @@ export const ENEMIES_DB = {
     name: "Goblin",
     hp: 50,
     damage: 5,
-    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Goblin_by_armandeo64.jpg/640px-Goblin_by_armandeo64.jpg",
+    img: "https://i.pinimg.com/736x/4f/e6/2e/4fe62e54744e22350382f9d71f227f23.jpg",
     isBoss: false,
     tier: 1,
   },

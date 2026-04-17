@@ -33,8 +33,8 @@
       <div class="game-container">
         <div class="hero-panel">
           <div class="hero-stats">
-            <h2>Hero HP: <span id="hero-hp">100</span></h2>
-            <h3>Hero MP: <span id="hero-mp">50</span></h3>
+            <h2>HP: <span id="hero-hp">100</span></h2>
+            <h3>MP: <span id="hero-mp">50</span></h3>
             <h3>Weapons: <span id="hero-weapons">0/2</span></h3>
             <div id="equipped-weapons-list"></div>
             <h3>Gold: <span id="gold-balance">0</span></h3>
@@ -56,9 +56,11 @@
             <div id="hero-mp-bar" style="width: 100%"></div>
           </div>
 
-          <hr style="border: 1px solid #4a0000; margin: 20px 0" />
-          <h3>Shop:</h3>
-          <ul id="shop-list"></ul>
+          <div id="shop-panel" style="display: none">
+            <hr style="border: 1px solid #4a0000; margin: 20px 0" />
+            <h3>Shop:</h3>
+            <ul id="shop-list"></ul>
+          </div>
 
           <hr style="border: 1px solid #4a0000; margin: 20px 0" />
           <div

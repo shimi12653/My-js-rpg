@@ -54,6 +54,7 @@ const modalRestartBtn = document.querySelector("#modal-restart-btn");
 const modalVictoryRestartBtn = document.querySelector(
   "#modal-victory-restart-btn",
 );
+const shopPanel = document.querySelector("#shop-panel");
 
 let isSellMode = false; // Состояние для продажи вещей
 
