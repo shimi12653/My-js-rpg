@@ -15,6 +15,7 @@ export const ITEMS = {
   SCYTHE: "Iron Scythe",
   DUAL_DAGGERS: "Dual Daggers",
   BOW: "Wooden Bow",
+  LEATHER_ARMOR: "Leather Armor",
 };
 
 export const SETTINGS = {
@@ -30,6 +31,10 @@ export const SETTINGS = {
   WEAPON_DAMAGE: 5,
   MAX_HANDS: 2,
   HERO_MAX_MANA: 50,
+
+  // armor
+  LEATHER_ARMOR_BONUS: 5,
+  LEATHER_ARMOR_COST: 200,
 
   // fight
   BOMB_DAMAGE: 50,

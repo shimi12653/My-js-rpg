@@ -55,6 +55,7 @@ const modalVictoryRestartBtn = document.querySelector(
   "#modal-victory-restart-btn",
 );
 const shopPanel = document.querySelector("#shop-panel");
+const heroArmor = document.querySelector("#hero-armor");
 
 let isSellMode = false; // Состояние для продажи вещей
 
@@ -74,6 +75,7 @@ const shopItems = [
   { name: ITEMS.SCYTHE, price: SETTINGS.SCYTHE_COST },
   { name: ITEMS.DUAL_DAGGERS, price: SETTINGS.DUAL_DAGGERS_COST },
   { name: ITEMS.BOW, price: SETTINGS.BOW_COST },
+  { name: ITEMS.LEATHER_ARMOR, price: SETTINGS.LEATHER_ARMOR_COST },
 ];
 
 // Обаятельная функция логов
@@ -162,12 +164,14 @@ const updateHeroUI = (newStats) => {
     if (newStats.equippedWeapons !== undefined)
       game.hero.equippedWeapons = newStats.equippedWeapons;
     if (newStats.weapons !== undefined) game.hero.weapons = newStats.weapons;
+    if (newStats.armor !== undefined) game.hero.armor = newStats.armor;
   }
 
   heroHp.innerText = game.hero.hp;
   heroMp.innerText = game.hero.mana;
   heroWeapons.innerText = `${game.hero.equippedWeapons || 0}/${game.hero.maxHands}`;
   goldBalance.innerText = game.hero.gold;
+  heroArmor.innerText = game.hero.armor;
 
   const hpPercent = Math.max(0, (game.hero.hp / game.hero.maxHp) * 100);
   heroHpBar.style.width = `${hpPercent}%`;
@@ -326,6 +330,7 @@ const renderInventory = () => {
             game.hero.gold = data.heroStats.gold;
             game.hero.mana = data.heroStats.mana;
             game.hero.equippedWeapons = data.heroStats.equippedWeapons;
+            game.hero.armor = data.heroStats.armor || 0;
             game.currentEnemy.hp = data.enemyHpLeft;
             game.hero.weapons = data.heroStats.weapons || [];
 
@@ -654,6 +659,16 @@ moveNorth.addEventListener("click", async () => {
       if (data.currentFloor) {
         dungeonFloor.innerText = data.currentFloor;
         logMessage(`You are on floor ${data.currentFloor}`, "#4169E1");
+
+        if (data.currentFloor === 4) {
+          shopPanel.style.display = "block";
+          logMessage(
+            "Merchant: 'Welcome to my humble shop, travaler!",
+            "#FFD700",
+          );
+        } else {
+          shopPanel.style.display = "none";
+        }
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -712,6 +727,16 @@ moveSouth.addEventListener("click", async () => {
       if (data.currentFloor) {
         dungeonFloor.innerText = data.currentFloor;
         logMessage(`You are on floor ${data.currentFloor}`, "#4169E1");
+
+        if (data.currentFloor === 4) {
+          shopPanel.style.display = "block";
+          logMessage(
+            "Merchant: 'Welcome to my humble shop, travaler!",
+            "#FFD700",
+          );
+        } else {
+          shopPanel.style.display = "none";
+        }
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -770,6 +795,16 @@ moveEast.addEventListener("click", async () => {
       if (data.currentFloor) {
         dungeonFloor.innerText = data.currentFloor;
         logMessage(`You are on floor ${data.currentFloor}`, "#4169E1");
+
+        if (data.currentFloor === 4) {
+          shopPanel.style.display = "block";
+          logMessage(
+            "Merchant: 'Welcome to my humble shop, travaler!",
+            "#FFD700",
+          );
+        } else {
+          shopPanel.style.display = "none";
+        }
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -828,6 +863,16 @@ moveWest.addEventListener("click", async () => {
       if (data.currentFloor) {
         dungeonFloor.innerText = data.currentFloor;
         logMessage(`You are on floor ${data.currentFloor}`, "#4169E1");
+
+        if (data.currentFloor === 4) {
+          shopPanel.style.display = "block";
+          logMessage(
+            "Merchant: 'Welcome to my humble shop, travaler!",
+            "#FFD700",
+          );
+        } else {
+          shopPanel.style.display = "none";
+        }
       }
     } else {
       logMessage(data.message, "#3b8898");
@@ -1019,6 +1064,7 @@ const loadGame = async () => {
     game.hero.maxHp = data.heroStats.maxHp;
     game.hero.damage = data.heroStats.damage;
     game.hero.gold = data.heroStats.gold;
+    game.hero.armor = data.heroStats.armor || 0;
     game.hero.equippedWeapons = data.heroStats.equippedWeapons || 0;
     game.hero.weapons = data.heroStats.weapons || [];
 

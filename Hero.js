@@ -11,6 +11,7 @@ export class Hero {
     this.weapons = []; // Массив для счёта оружия
     this.mana = SETTINGS.HERO_MAX_MANA;
     this.maxMana = SETTINGS.HERO_MAX_MANA;
+    this.armor = 0;
 
     // Навигация в матрице
     this.x = 1;
@@ -18,8 +19,12 @@ export class Hero {
   }
 
   takeDamage(amount) {
-    this.hp -= amount;
+    let reducedDamage = Math.floor(amount * (1 - this.armor / 100));
+    reducedDamage = Math.max(1, reducedDamage); // Защита от бесмертия (урон не может быть меньше 1)
+    this.hp -= reducedDamage;
+
     if (this.hp < 0) this.hp = 0;
+    return reducedDamage;
   }
 
   heal(amount) {
@@ -37,6 +42,11 @@ export class Hero {
     } else {
       return false;
     }
+  }
+
+  // Метод для брони
+  equipArmor(armorValue) {
+    this.armor = armorValue;
   }
 
   // Метод получения золота

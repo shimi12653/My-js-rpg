@@ -107,6 +107,7 @@ if (fs.existsSync(DB)) {
     myGame.hero.damage = savedData.heroStats.damage;
     myGame.hero.gold = savedData.heroStats.gold;
     myGame.hero.equippedWeapons = savedData.heroStats.equippedWeapons || 0;
+    myGame.hero.armor = savedData.heroStats.armor || 0;
 
     // Тут происходит приведение текста в массив оружия
     if (savedData.heroStats?.weapons) {
@@ -231,6 +232,7 @@ app.get("/generate-loot", (req, res) => {
 app.get("/enemy-attack", (req, res) => {
   let burnMessage = "";
   let isDodged = false;
+  let takenDamageDealt = 0;
 
   if (myGame.currentEnemy.burnTurns > 0) {
     myGame.currentEnemy.takeDamage(myGame.currentEnemy.burnDamage);
@@ -257,7 +259,7 @@ app.get("/enemy-attack", (req, res) => {
   const levelMultiplier = 1 + currentLevel * ENEMY_LEVEL_MULTI;
   let scaledDamage = Math.floor(myGame.currentEnemy.damage * levelMultiplier);
 
-  // ПРоверка на уклонение
+  // Проверка на уклонение
   for (const wpn of myGame.hero.weapons) {
     if (wpn.dodgeChance) {
       if (Math.random() < wpn.dodgeChance) {
@@ -268,14 +270,12 @@ app.get("/enemy-attack", (req, res) => {
   }
 
   if (!isDodged) {
-    myGame.hero.takeDamage(scaledDamage);
-  } else {
-    scaledDamage = 0;
+    takenDamageDealt = myGame.hero.takeDamage(scaledDamage);
   }
 
   res.json({
     message: "The enemy has struck back!",
-    damageDealt: scaledDamage,
+    damageDealt: takenDamageDealt,
     heroHpLeft: myGame.hero.hp,
     enemyHpLeft: myGame.currentEnemy.hp,
     critLevel: levelMultiplier.toFixed(1),
@@ -805,6 +805,23 @@ app.get("/buy-item", (req, res) => {
         message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
       });
     }
+  } else if (itemToBuy === ITEMS.LEATHER_ARMOR) {
+    if (myGame.hero.gold >= SETTINGS.LEATHER_ARMOR_COST) {
+      myGame.hero.gold -= SETTINGS.LEATHER_ARMOR_COST;
+      myGame.inventory.push(ITEMS.LEATHER_ARMOR);
+
+      res.json({
+        success: true,
+        message: `You bought a ${ITEMS.LEATHER_ARMOR} for ${SETTINGS.LEATHER_ARMOR_COST} gold.`,
+        goldLeft: myGame.hero.gold,
+        inventory: myGame.inventory,
+      });
+    } else {
+      res.json({
+        success: false,
+        message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
+      });
+    }
   } else {
     res.json({
       success: false,
@@ -930,6 +947,9 @@ app.get("/use-item", (req, res) => {
     }
 
     message = `You equipped ${ITEMS.BOW}.`;
+  } else if (item === ITEMS.LEATHER_ARMOR) {
+    myGame.hero.equipArmor(SETTINGS.LEATHER_ARMOR_BONUS);
+    message = `You put on the ${ITEMS.LEATHER_ARMOR}. Protection +${SETTINGS.LEATHER_ARMOR_BONUS}!`;
   } else if (item === "Cinderheart Pyre Staff") {
     const isEquipped = myGame.hero.equipWeapon(new CinderheartStaff());
     if (!isEquipped)
@@ -1136,6 +1156,7 @@ app.post("/save-game", (req, res) => {
       gold: myGame.hero.gold,
       equippedWeapons: myGame.hero.equippedWeapons,
       weapons: myGame.hero.weapons,
+      armor: myGame.hero.armor,
     },
   };
 
@@ -1159,6 +1180,7 @@ app.get("/load-game", (req, res) => {
       gold: myGame.hero.gold,
       equippedWeapons: myGame.hero.equippedWeapons,
       weapons: myGame.hero.weapons,
+      armor: myGame.hero.armor,
     },
   });
 });
