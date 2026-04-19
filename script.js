@@ -66,17 +66,7 @@ let lastLogMessage = "";
 
 let countLogMessages = 0;
 
-// Массив товаров в магазине
-const shopItems = [
-  { name: ITEMS.BOMB, price: SETTINGS.BOMB_COST },
-  { name: ITEMS.MANA_POTION, price: SETTINGS.MANA_POTION_COST },
-  { name: ITEMS.STAFF, price: SETTINGS.STAFF_COST },
-  { name: ITEMS.POTION, price: SETTINGS.POTION_COST },
-  { name: ITEMS.SCYTHE, price: SETTINGS.SCYTHE_COST },
-  { name: ITEMS.DUAL_DAGGERS, price: SETTINGS.DUAL_DAGGERS_COST },
-  { name: ITEMS.BOW, price: SETTINGS.BOW_COST },
-  { name: ITEMS.LEATHER_ARMOR, price: SETTINGS.LEATHER_ARMOR_COST },
-];
+let currentShop = []; // Сток магазин (заполняется при помощи generateShopinventory)
 
 // Обаятельная функция логов
 const logMessage = (text, color = "black", fontWeight = "normal") => {
@@ -231,10 +221,10 @@ const updateEnemyUI = () => {
 };
 
 // Функция рендера магазина
-const renderShop = () => {
+const renderShop = (itemsToSell) => {
   shopList.innerHTML = "";
 
-  shopItems.forEach((shopItem) => {
+  itemsToSell.forEach((shopItem) => {
     const newLi = document.createElement("li");
     newLi.innerText = `${shopItem.name}. Price: ${shopItem.price} gold`;
     newLi.style.cursor = "pointer";
@@ -273,6 +263,38 @@ const renderShop = () => {
     });
     shopList.appendChild(newLi);
   });
+};
+
+// Рандомная генерация вещей в магазин
+const generateShopInventory = () => {
+  let newShop = [];
+
+  // Вещи, которые будут в магазине всегда
+  newShop.push(
+    { name: ITEMS.POTION, price: SETTINGS.POTION_COST },
+    { name: ITEMS.MANA_POTION, price: SETTINGS.MANA_POTION_COST },
+    { name: ITEMS.BOMB, price: SETTINGS.BOMB_COST },
+    { name: ITEMS.LEATHER_ARMOR, price: SETTINGS.LEATHER_ARMOR_COST },
+  );
+
+  // Список возможных вещей
+  const weaponPool = [
+    { name: ITEMS.STAFF, price: SETTINGS.STAFF_COST },
+    { name: ITEMS.SCYTHE, price: SETTINGS.SCYTHE_COST },
+    { name: ITEMS.DUAL_DAGGERS, price: SETTINGS.DUAL_DAGGERS_COST },
+    { name: ITEMS.BOW, price: SETTINGS.BOW_COST },
+  ];
+
+  // Массив для выбора оружия из weaponPool
+  for (let i = 0; i < 2; i++) {
+    let randomItem = Math.floor(Math.random() * weaponPool.length);
+
+    const weapon = weaponPool.splice(randomItem, 1)[0];
+
+    newShop.push(weapon);
+  }
+
+  return newShop;
 };
 
 // --- ФУНКЦИЯ ИНВЕНТАРЯ ---
@@ -583,7 +605,11 @@ const initGame = async () => {
   heroHp.innerText = game.hero.hp;
 
   renderInventory();
-  renderShop();
+
+  if (dungeonFloor.innerText === "4") {
+    currentShop = generateShopInventory();
+    renderShop(currentShop);
+  }
 };
 
 // Скрытие интерфейса боя
@@ -666,6 +692,9 @@ moveNorth.addEventListener("click", async () => {
             "Merchant: 'Welcome to my humble shop, travaler!",
             "#FFD700",
           );
+
+          currentShop = generateShopInventory();
+          renderShop(currentShop);
         } else {
           shopPanel.style.display = "none";
         }
@@ -734,6 +763,9 @@ moveSouth.addEventListener("click", async () => {
             "Merchant: 'Welcome to my humble shop, travaler!",
             "#FFD700",
           );
+
+          currentShop = generateShopInventory();
+          renderShop(currentShop);
         } else {
           shopPanel.style.display = "none";
         }
@@ -802,6 +834,9 @@ moveEast.addEventListener("click", async () => {
             "Merchant: 'Welcome to my humble shop, travaler!",
             "#FFD700",
           );
+
+          currentShop = generateShopInventory();
+          renderShop(currentShop);
         } else {
           shopPanel.style.display = "none";
         }
@@ -870,6 +905,9 @@ moveWest.addEventListener("click", async () => {
             "Merchant: 'Welcome to my humble shop, travaler!",
             "#FFD700",
           );
+
+          currentShop = generateShopInventory();
+          renderShop(currentShop);
         } else {
           shopPanel.style.display = "none";
         }

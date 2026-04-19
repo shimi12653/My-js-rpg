@@ -5,7 +5,7 @@ import cors from "cors";
 import fs from "fs";
 import { Game } from "./Game.js"; // 1. Импортируем нашу игру
 import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с null
-import { GAME_STATE, ITEMS, SETTINGS } from "./constants.js";
+import { ADVANCED_WEAPONS, GAME_STATE, ITEMS, SETTINGS } from "./constants.js";
 import {
   Weapon,
   FireStaff,
@@ -207,17 +207,42 @@ app.get("/generate-loot", (req, res) => {
   let droppedItem = null;
   let message = "No loot found.";
 
-  if (Math.random() < 0.5) {
-    const possibleLoot = [ITEMS.POTION, ITEMS.GOLD];
-    droppedItem = possibleLoot[Math.floor(Math.random() * possibleLoot.length)];
+  const commonLoot = [ITEMS.POTION, ITEMS.MANA_POTION, ITEMS.GOLD];
+  const rareLoot = [
+    ITEMS.SWORD,
+    ITEMS.BOW,
+    ITEMS.DUAL_DAGGERS,
+    ITEMS.STAFF,
+    ITEMS.SCYTHE,
+    ITEMS.LEATHER_ARMOR,
+  ];
+  const epicLoot = Object.values(ADVANCED_WEAPONS).map((w) => w.name); // Хэш-таблицу превращаем в массив при помощи values и через мар ищем оружия по названию
 
-    if (droppedItem === ITEMS.GOLD) {
-      myGame.hero.gold += SETTINGS.GOLD_DROP;
-      message = `You found a ${ITEMS.GOLD} from enemy. You got ${SETTINGS.GOLD_DROP} gold!`;
-    } else {
-      myGame.inventory.push(droppedItem);
-      message = `You found ${droppedItem} from enemy. Congratulations!`;
-    }
+  const roll = Math.random();
+
+  // Рандом выпадения оружия (30% на коммонку, 25% на рарку, 5 - епик. 40% на ничего)
+  if (roll < 0.4) {
+    message = "No loot found";
+  } else if (roll < 0.7) {
+    const randomItem = Math.floor(Math.random() * commonLoot.length);
+    droppedItem = commonLoot[randomItem];
+  } else if (roll < 0.95) {
+    const randomItem = Math.floor(Math.random() * rareLoot.length);
+    droppedItem = rareLoot[randomItem];
+  } else {
+    const randomItem = Math.floor(Math.random() * epicLoot.length);
+    droppedItem = epicLoot[randomItem];
+  }
+
+  // Проверка на золото
+  if (droppedItem === ITEMS.GOLD) {
+    myGame.hero.gold += SETTINGS.GOLD_DROP;
+
+    message = `You found a ${ITEMS.GOLD}! +${SETTINGS.GOLD_DROP} coins.`;
+  } else if (droppedItem !== null) {
+    myGame.inventory.push(droppedItem);
+
+    message = `Enemy dropped a ${droppedItem}.`;
   }
 
   res.json({
