@@ -20,6 +20,7 @@ import {
   apiMove,
   apiGetMap,
   apiUnequipItem,
+  apiUnequipArmor,
 } from "./network.js";
 
 const myBtn = document.querySelector("#attack-btn");
@@ -56,6 +57,7 @@ const modalVictoryRestartBtn = document.querySelector(
 );
 const shopPanel = document.querySelector("#shop-panel");
 const heroArmor = document.querySelector("#hero-armor");
+const equippedArmorList = document.querySelector("#equipped-armor-list");
 
 let isSellMode = false; // Состояние для продажи вещей
 
@@ -155,6 +157,8 @@ const updateHeroUI = (newStats) => {
       game.hero.equippedWeapons = newStats.equippedWeapons;
     if (newStats.weapons !== undefined) game.hero.weapons = newStats.weapons;
     if (newStats.armor !== undefined) game.hero.armor = newStats.armor;
+    if (newStats.equippedArmor !== undefined)
+      game.hero.equippedArmor = newStats.equippedArmor;
   }
 
   heroHp.innerText = game.hero.hp;
@@ -162,6 +166,16 @@ const updateHeroUI = (newStats) => {
   heroWeapons.innerText = `${game.hero.equippedWeapons || 0}/${game.hero.maxHands}`;
   goldBalance.innerText = game.hero.gold;
   heroArmor.innerText = game.hero.armor;
+
+  equippedArmorList.innerHTML = "";
+
+  if (game.hero.equippedArmor !== null) {
+    const armorBtn = document.createElement("button");
+    armorBtn.innerText = "[СНЯТЬ] " + game.hero.equippedArmor;
+    armorBtn.className = "armor-btn";
+    armorBtn.onclick = () => unequipArmor();
+    equippedArmorList.appendChild(armorBtn);
+  }
 
   const hpPercent = Math.max(0, (game.hero.hp / game.hero.maxHp) * 100);
   heroHpBar.style.width = `${hpPercent}%`;
@@ -203,6 +217,26 @@ const unequipItem = async (index) => {
     }
   } catch (e) {
     console.error("Failed to unequip item: ", e);
+  }
+};
+
+// Снятие брони с героя
+const unequipArmor = async () => {
+  try {
+    const data = await apiUnequipArmor();
+
+    if (data.success) {
+      updateHeroUI(data.heroStats);
+
+      game.inventory.length = 0;
+      game.inventory.push(...data.inventory);
+
+      renderInventory();
+      logMessage(data.message, "orange");
+      await saveGame();
+    }
+  } catch (e) {
+    console.error("Failed to unequip armor: ", e);
   }
 };
 
@@ -355,6 +389,7 @@ const renderInventory = () => {
             game.hero.armor = data.heroStats.armor || 0;
             game.currentEnemy.hp = data.enemyHpLeft;
             game.hero.weapons = data.heroStats.weapons || [];
+            game.hero.equippedArmor = data.heroStats.equippedArmor || null;
 
             logMessage(
               `Server: ${data.message}`,
@@ -441,6 +476,12 @@ const handleVictory = async () => {
 
   if (dungeonFloor.innerText === "5") {
     victoryScreen.classList.remove("hidden");
+
+    logMessage("The Dragon is dead! The realm is safe.", "#FFD700", "bold");
+
+    game.state = GAME_STATE.VICTORY;
+
+    return;
   }
 
   try {
@@ -609,6 +650,7 @@ const initGame = async () => {
   if (dungeonFloor.innerText === "4") {
     currentShop = generateShopInventory();
     renderShop(currentShop);
+    shopPanel.style.display = "block";
   }
 };
 
@@ -1105,6 +1147,7 @@ const loadGame = async () => {
     game.hero.armor = data.heroStats.armor || 0;
     game.hero.equippedWeapons = data.heroStats.equippedWeapons || 0;
     game.hero.weapons = data.heroStats.weapons || [];
+    game.hero.equippedArmor = data.heroStats.equippedArmor || null;
 
     console.log("Game loaded successfully.");
   } catch (e) {

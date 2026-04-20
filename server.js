@@ -108,6 +108,7 @@ if (fs.existsSync(DB)) {
     myGame.hero.gold = savedData.heroStats.gold;
     myGame.hero.equippedWeapons = savedData.heroStats.equippedWeapons || 0;
     myGame.hero.armor = savedData.heroStats.armor || 0;
+    myGame.hero.equippedArmor = savedData.heroStats.equippedArmor || null;
 
     // Тут происходит приведение текста в массив оружия
     if (savedData.heroStats?.weapons) {
@@ -973,7 +974,14 @@ app.get("/use-item", (req, res) => {
 
     message = `You equipped ${ITEMS.BOW}.`;
   } else if (item === ITEMS.LEATHER_ARMOR) {
-    myGame.hero.equipArmor(SETTINGS.LEATHER_ARMOR_BONUS);
+    // Если на герое есть броня - снипаем её и кладём в инвентарь
+    if (myGame.hero.equippedArmor !== null) {
+      myGame.inventory.push(myGame.hero.equippedArmor);
+    }
+
+    myGame.hero.equippedArmor = ITEMS.LEATHER_ARMOR;
+    myGame.hero.armor = SETTINGS.LEATHER_ARMOR_BONUS;
+
     message = `You put on the ${ITEMS.LEATHER_ARMOR}. Protection +${SETTINGS.LEATHER_ARMOR_BONUS}!`;
   } else if (item === "Cinderheart Pyre Staff") {
     const isEquipped = myGame.hero.equipWeapon(new CinderheartStaff());
@@ -1106,6 +1114,30 @@ app.get("/unequip-item", (req, res) => {
   });
 });
 
+// Снятие брони с героя
+app.get("/uneqip-armor", (req, res) => {
+  if (!myGame.hero.equippedArmor) {
+    return res.json({
+      success: false,
+      message: "No armor equipped.",
+    });
+  }
+
+  const armorName = myGame.hero.equippedArmor;
+
+  myGame.inventory.push(armorName);
+
+  myGame.hero.equippedArmor = null;
+  myGame.hero.armor = 0;
+
+  res.json({
+    success: true,
+    message: `You took off the ${armorName}.`,
+    inventory: myGame.inventory,
+    heroStats: myGame.hero,
+  });
+});
+
 // Логика продажи инвентаря
 app.get("/sell-item", (req, res) => {
   const itemIndex = parseInt(req.query.index);
@@ -1182,6 +1214,7 @@ app.post("/save-game", (req, res) => {
       equippedWeapons: myGame.hero.equippedWeapons,
       weapons: myGame.hero.weapons,
       armor: myGame.hero.armor,
+      equippedArmor: myGame.hero.equippedArmor,
     },
   };
 
@@ -1206,6 +1239,7 @@ app.get("/load-game", (req, res) => {
       equippedWeapons: myGame.hero.equippedWeapons,
       weapons: myGame.hero.weapons,
       armor: myGame.hero.armor,
+      equippedArmor: myGame.hero.equippedArmor,
     },
   });
 });

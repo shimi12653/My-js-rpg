@@ -171,3 +171,13 @@ export const apiUnequipItem = async (index) => {
     throw e;
   }
 };
+
+export const apiUnequipArmor = async () => {
+  try {
+    const response = await fetch(`${BASE_URL}/uneqip-armor`);
+    return await response.json();
+  } catch (e) {
+    console.error("Network Error (uneqip-armor): ", e);
+    throw e;
+  }
+};
