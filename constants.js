@@ -107,8 +107,42 @@ export const ADVANCED_WEAPONS = {
 };
 
 export const ARMOR_DATA = {
+  // --- COMMON (Обычная) ---
   "Leather Helmet": { slot: "head", bonus: 2, cost: 100 },
   "Leather Armor": { slot: "chest", bonus: 5, cost: 200 },
   "Leather Pants": { slot: "legs", bonus: 3, cost: 150 },
-  // Потом сюда ещё можно будет накидать всего разного
+
+  "Iron Helmet": { slot: "head", bonus: 4, cost: 250 },
+  "Iron Plate": { slot: "chest", bonus: 10, cost: 500 },
+  "Iron Greaves": { slot: "legs", bonus: 6, cost: 350 },
+
+  "Chainmail Coif": { slot: "head", bonus: 3, cost: 180 },
+  "Chainmail Hauberk": { slot: "chest", bonus: 8, cost: 400 },
+  "Chainmail Leggings": { slot: "legs", bonus: 5, cost: 280 },
+
+  // --- RARE (Редкая) ---
+  "Steel Greathelm": { slot: "head", bonus: 7, cost: 800 },
+  "Steel Cuirass": { slot: "chest", bonus: 18, cost: 1600 },
+  "Steel Tassets": { slot: "legs", bonus: 10, cost: 1100 },
+
+  "Shadow Hood": { slot: "head", bonus: 5, cost: 700 },
+  "Shadow Garb": { slot: "chest", bonus: 15, cost: 1400 },
+  "Shadow Boots": { slot: "legs", bonus: 10, cost: 1000 },
+
+  "Silver Circlet": { slot: "head", bonus: 6, cost: 750 },
+  "Silver Breastplate": { slot: "chest", bonus: 16, cost: 1500 },
+  "Silver Leggings": { slot: "legs", bonus: 8, cost: 1050 },
+
+  // --- EPIC (Эпическая) ---
+  "Dragonscale Helm": { slot: "head", bonus: 12, cost: 3000 },
+  "Dragonscale Plate": { slot: "chest", bonus: 35, cost: 6000 },
+  "Dragonscale Greaves": { slot: "legs", bonus: 23, cost: 4500 },
+
+  "Abyssal Crown": { slot: "head", bonus: 15, cost: 2800 },
+  "Abyssal Robes": { slot: "chest", bonus: 40, cost: 5500 },
+  "Abyssal Leggings": { slot: "legs", bonus: 25, cost: 4200 },
+
+  "Celestial Halo": { slot: "head", bonus: 10, cost: 3200 },
+  "Celestial Vestment": { slot: "chest", bonus: 30, cost: 6500 },
+  "Celestial Kilt": { slot: "legs", bonus: 20, cost: 4800 },
 };

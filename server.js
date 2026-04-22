@@ -648,7 +648,7 @@ app.get("/reset-hero", (req, res) => {
   myGame.hero.mana = SETTINGS.HERO_MAX_MANA;
   myGame.hero.weapons = []; // Очищаем массив при ресете
   myGame.hero.armor = 0;
-  myGame.hero.equipment = { head: null, chesht: null, legs: null };
+  myGame.hero.equipment = { head: null, chest: null, legs: null };
 
   setupFloor(1);
 
