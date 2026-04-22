@@ -1,7 +1,7 @@
 "use strict";
 
 import { Game } from "./Game.js";
-import { ITEMS, GAME_STATE } from "./constants.js";
+import { ITEMS, GAME_STATE, ARMOR_DATA } from "./constants.js";
 import { SETTINGS } from "./constants.js";
 import {
   apiHealHero,
@@ -157,8 +157,8 @@ const updateHeroUI = (newStats) => {
       game.hero.equippedWeapons = newStats.equippedWeapons;
     if (newStats.weapons !== undefined) game.hero.weapons = newStats.weapons;
     if (newStats.armor !== undefined) game.hero.armor = newStats.armor;
-    if (newStats.equippedArmor !== undefined)
-      game.hero.equippedArmor = newStats.equippedArmor;
+    if (newStats.equipment !== undefined)
+      game.hero.equipment = newStats.equipment;
   }
 
   heroHp.innerText = game.hero.hp;
@@ -169,13 +169,20 @@ const updateHeroUI = (newStats) => {
 
   equippedArmorList.innerHTML = "";
 
-  if (game.hero.equippedArmor !== null) {
-    const armorBtn = document.createElement("button");
-    armorBtn.innerText = "[СНЯТЬ] " + game.hero.equippedArmor;
-    armorBtn.className = "armor-btn";
-    armorBtn.onclick = () => unequipArmor();
-    equippedArmorList.appendChild(armorBtn);
-  }
+  Object.keys(game.hero.equipment).forEach((slot) => {
+    // Перебираем все слоты
+    const itemName = game.hero.equipment[slot];
+
+    if (itemName) {
+      const armorBtn = document.createElement("button");
+
+      armorBtn.innerText = `[Снять ${slot}] ${itemName}`;
+      armorBtn.className = "armor-btn";
+      armorBtn.style.marginBottom = "5px";
+      armorBtn.onclick = () => unequipArmor(slot);
+      equippedArmorList.appendChild(armorBtn);
+    }
+  });
 
   const hpPercent = Math.max(0, (game.hero.hp / game.hero.maxHp) * 100);
   heroHpBar.style.width = `${hpPercent}%`;
@@ -221,9 +228,9 @@ const unequipItem = async (index) => {
 };
 
 // Снятие брони с героя
-const unequipArmor = async () => {
+const unequipArmor = async (slot) => {
   try {
-    const data = await apiUnequipArmor();
+    const data = await apiUnequipArmor(slot);
 
     if (data.success) {
       updateHeroUI(data.heroStats);
@@ -308,7 +315,9 @@ const generateShopInventory = () => {
     { name: ITEMS.POTION, price: SETTINGS.POTION_COST },
     { name: ITEMS.MANA_POTION, price: SETTINGS.MANA_POTION_COST },
     { name: ITEMS.BOMB, price: SETTINGS.BOMB_COST },
-    { name: ITEMS.LEATHER_ARMOR, price: SETTINGS.LEATHER_ARMOR_COST },
+    { name: "Leather Helmet", price: 100 },
+    { name: "Leather Armor", price: 200 },
+    { name: "Leather Pants", price: 150 },
   );
 
   // Список возможных вещей
@@ -389,7 +398,11 @@ const renderInventory = () => {
             game.hero.armor = data.heroStats.armor || 0;
             game.currentEnemy.hp = data.enemyHpLeft;
             game.hero.weapons = data.heroStats.weapons || [];
-            game.hero.equippedArmor = data.heroStats.equippedArmor || null;
+            game.hero.equipment = data.heroStats.equipment || {
+              head: null,
+              chest: null,
+              legs: null,
+            };
 
             logMessage(
               `Server: ${data.message}`,
@@ -1147,7 +1160,11 @@ const loadGame = async () => {
     game.hero.armor = data.heroStats.armor || 0;
     game.hero.equippedWeapons = data.heroStats.equippedWeapons || 0;
     game.hero.weapons = data.heroStats.weapons || [];
-    game.hero.equippedArmor = data.heroStats.equippedArmor || null;
+    game.hero.equipment = data.heroStats.equipment || {
+      head: null,
+      chest: null,
+      legs: null,
+    };
 
     console.log("Game loaded successfully.");
   } catch (e) {

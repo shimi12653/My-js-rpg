@@ -15,7 +15,6 @@ export const ITEMS = {
   SCYTHE: "Iron Scythe",
   DUAL_DAGGERS: "Dual Daggers",
   BOW: "Wooden Bow",
-  LEATHER_ARMOR: "Leather Armor",
 };
 
 export const SETTINGS = {
@@ -32,10 +31,6 @@ export const SETTINGS = {
   MAX_HANDS: 2,
   HERO_MAX_MANA: 50,
 
-  // armor
-  LEATHER_ARMOR_BONUS: 5,
-  LEATHER_ARMOR_COST: 200,
-
   // fight
   BOMB_DAMAGE: 50,
   ENEMY_REGEN_PERCENT: 0.05,
@@ -44,7 +39,7 @@ export const SETTINGS = {
   // items (cost)
   GOLD_DROP: 50, // Имеется ввиду сколько золото с лута приносит
   BOMB_COST: 100,
-  STARTING_GOLD: 1000,
+  STARTING_GOLD: 500,
   STAFF_COST: 300,
   POTION_COST: 50,
   POTION_SELL_PRICE: 10,
@@ -109,4 +104,11 @@ export const ADVANCED_WEAPONS = {
     name: "Ashen Wraith Longbow",
     cost: 2600,
   },
+};
+
+export const ARMOR_DATA = {
+  "Leather Helmet": { slot: "head", bonus: 2, cost: 100 },
+  "Leather Armor": { slot: "chest", bonus: 5, cost: 200 },
+  "Leather Pants": { slot: "legs", bonus: 3, cost: 150 },
+  // Потом сюда ещё можно будет накидать всего разного
 };

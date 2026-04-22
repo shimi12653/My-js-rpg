@@ -5,7 +5,13 @@ import cors from "cors";
 import fs from "fs";
 import { Game } from "./Game.js"; // 1. Импортируем нашу игру
 import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с null
-import { ADVANCED_WEAPONS, GAME_STATE, ITEMS, SETTINGS } from "./constants.js";
+import {
+  ADVANCED_WEAPONS,
+  ARMOR_DATA,
+  GAME_STATE,
+  ITEMS,
+  SETTINGS,
+} from "./constants.js";
 import {
   Weapon,
   FireStaff,
@@ -108,7 +114,11 @@ if (fs.existsSync(DB)) {
     myGame.hero.gold = savedData.heroStats.gold;
     myGame.hero.equippedWeapons = savedData.heroStats.equippedWeapons || 0;
     myGame.hero.armor = savedData.heroStats.armor || 0;
-    myGame.hero.equippedArmor = savedData.heroStats.equippedArmor || null;
+    myGame.hero.equipment = savedData.heroStats.equipment || {
+      head: null,
+      chest: null,
+      legs: null,
+    };
 
     // Тут происходит приведение текста в массив оружия
     if (savedData.heroStats?.weapons) {
@@ -215,7 +225,9 @@ app.get("/generate-loot", (req, res) => {
     ITEMS.DUAL_DAGGERS,
     ITEMS.STAFF,
     ITEMS.SCYTHE,
-    ITEMS.LEATHER_ARMOR,
+    "Leather Armor",
+    "Leather Helmet",
+    "Leather Pants",
   ];
   const epicLoot = Object.values(ADVANCED_WEAPONS).map((w) => w.name); // Хэш-таблицу превращаем в массив при помощи values и через мар ищем оружия по названию
 
@@ -635,6 +647,8 @@ app.get("/reset-hero", (req, res) => {
   myGame.hero.gold = 0;
   myGame.hero.mana = SETTINGS.HERO_MAX_MANA;
   myGame.hero.weapons = []; // Очищаем массив при ресете
+  myGame.hero.armor = 0;
+  myGame.hero.equipment = { head: null, chesht: null, legs: null };
 
   setupFloor(1);
 
@@ -831,14 +845,16 @@ app.get("/buy-item", (req, res) => {
         message: `Not enough money, bucko. Your balance: ${myGame.hero.gold}`,
       });
     }
-  } else if (itemToBuy === ITEMS.LEATHER_ARMOR) {
-    if (myGame.hero.gold >= SETTINGS.LEATHER_ARMOR_COST) {
-      myGame.hero.gold -= SETTINGS.LEATHER_ARMOR_COST;
-      myGame.inventory.push(ITEMS.LEATHER_ARMOR);
+  } else if (ARMOR_DATA[itemToBuy]) {
+    const armorCost = ARMOR_DATA[itemToBuy].cost;
+
+    if (myGame.hero.gold >= armorCost) {
+      myGame.hero.gold -= armorCost;
+      myGame.inventory.push(itemToBuy);
 
       res.json({
         success: true,
-        message: `You bought a ${ITEMS.LEATHER_ARMOR} for ${SETTINGS.LEATHER_ARMOR_COST} gold.`,
+        message: `You bought ${itemToBuy} for ${armorCost} gold.`,
         goldLeft: myGame.hero.gold,
         inventory: myGame.inventory,
       });
@@ -973,16 +989,25 @@ app.get("/use-item", (req, res) => {
     }
 
     message = `You equipped ${ITEMS.BOW}.`;
-  } else if (item === ITEMS.LEATHER_ARMOR) {
-    // Если на герое есть броня - снипаем её и кладём в инвентарь
-    if (myGame.hero.equippedArmor !== null) {
-      myGame.inventory.push(myGame.hero.equippedArmor);
+  } else if (ARMOR_DATA[item]) {
+    const armorInfo = ARMOR_DATA[item]; // В этом случае мы используем [], потому что не знаем что пользователь захочет одеть. Если он клацнет на шлем - JS пойдёт в equipment, найдёт slot, увидит, что slot = head и подставит туда именно head. equipment['head'] и equipment.head равносильно в JS
+    const slot = armorInfo.slot;
+
+    if (myGame.hero.equipment[slot] !== null) {
+      myGame.inventory.push(myGame.hero.equipment[slot]);
     }
 
-    myGame.hero.equippedArmor = ITEMS.LEATHER_ARMOR;
-    myGame.hero.armor = SETTINGS.LEATHER_ARMOR_BONUS;
+    myGame.hero.equipment[slot] = item;
 
-    message = `You put on the ${ITEMS.LEATHER_ARMOR}. Protection +${SETTINGS.LEATHER_ARMOR_BONUS}!`;
+    myGame.hero.armor = 0;
+    if (myGame.hero.equipment.head)
+      myGame.hero.armor += ARMOR_DATA[myGame.hero.equipment.head].bonus;
+    if (myGame.hero.equipment.chest)
+      myGame.hero.armor += ARMOR_DATA[myGame.hero.equipment.chest].bonus;
+    if (myGame.hero.equipment.legs)
+      myGame.hero.armor += ARMOR_DATA[myGame.hero.equipment.legs].bonus;
+
+    message = `You equipped ${item}. Total armor: ${myGame.hero.armor}.`;
   } else if (item === "Cinderheart Pyre Staff") {
     const isEquipped = myGame.hero.equipWeapon(new CinderheartStaff());
     if (!isEquipped)
@@ -1115,20 +1140,30 @@ app.get("/unequip-item", (req, res) => {
 });
 
 // Снятие брони с героя
-app.get("/uneqip-armor", (req, res) => {
-  if (!myGame.hero.equippedArmor) {
+app.get("/unequip-armor", (req, res) => {
+  const slot = req.query.slot; // Получаем запрос какой слот будем снимать
+
+  if (!slot || !myGame.hero.equipment[slot]) {
+    // Проверка доступный ли слот и надето ли на герое что-то
     return res.json({
       success: false,
-      message: "No armor equipped.",
+      message: "Slot is empty (or invalid).",
     });
   }
 
-  const armorName = myGame.hero.equippedArmor;
+  const armorName = myGame.hero.equipment[slot]; // Чтобы было легче обращаться к броне
 
-  myGame.inventory.push(armorName);
+  myGame.inventory.push(armorName); // Вставляем в инвентарь
 
-  myGame.hero.equippedArmor = null;
-  myGame.hero.armor = 0;
+  myGame.hero.equipment[slot] = null; // Убираем с героя
+
+  myGame.hero.armor = 0; // Обнуляем защиту и пересчитываем её сразу
+  if (myGame.hero.equipment.head)
+    myGame.hero.armor += ARMOR_DATA[myGame.hero.equipment.head].bonus;
+  if (myGame.hero.equipment.chest)
+    myGame.hero.armor += ARMOR_DATA[myGame.hero.equipment.chest].bonus;
+  if (myGame.hero.equipment.legs)
+    myGame.hero.armor += ARMOR_DATA[myGame.hero.equipment.legs].bonus;
 
   res.json({
     success: true,
@@ -1180,6 +1215,11 @@ app.get("/sell-item", (req, res) => {
   } else if (item === ITEMS.MANA_POTION) {
     myGame.hero.gold += SETTINGS.MANA_POTION_SELL_PRICE;
     message = `You sell a ${ITEMS.MANA_POTION} for ${SETTINGS.MANA_POTION_SELL_PRICE}.`;
+  } else if (ARMOR_DATA[item]) {
+    const sellPrice = Math.floor(ARMOR_DATA[item].cost / 3); // Продаём так, чтобы не писать постоянно cost и sell_price
+
+    myGame.hero.gold += sellPrice;
+    message = `You sold a ${item} for ${sellPrice} gold.`;
   }
 
   myGame.inventory.splice(itemIndex, 1);
@@ -1214,7 +1254,7 @@ app.post("/save-game", (req, res) => {
       equippedWeapons: myGame.hero.equippedWeapons,
       weapons: myGame.hero.weapons,
       armor: myGame.hero.armor,
-      equippedArmor: myGame.hero.equippedArmor,
+      equipment: myGame.hero.equipment,
     },
   };
 
@@ -1239,7 +1279,7 @@ app.get("/load-game", (req, res) => {
       equippedWeapons: myGame.hero.equippedWeapons,
       weapons: myGame.hero.weapons,
       armor: myGame.hero.armor,
-      equippedArmor: myGame.hero.equippedArmor,
+      equipment: myGame.hero.equipment,
     },
   });
 });

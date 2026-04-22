@@ -172,12 +172,12 @@ export const apiUnequipItem = async (index) => {
   }
 };
 
-export const apiUnequipArmor = async () => {
+export const apiUnequipArmor = async (slot) => {
   try {
-    const response = await fetch(`${BASE_URL}/uneqip-armor`);
+    const response = await fetch(`${BASE_URL}/unequip-armor?slot=${slot}`);
     return await response.json();
   } catch (e) {
-    console.error("Network Error (uneqip-armor): ", e);
+    console.error("Network Error (unequip-armor): ", e);
     throw e;
   }
 };

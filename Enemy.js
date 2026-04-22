@@ -7,7 +7,7 @@ export class Enemy {
     this.img = img;
 
     this.burnTurns = 0;
-    this.burnDamage = 5;
+    this.burnDamage = 10; // Можно ставить любой дамаг. Просто так будет более менее эффективно
   }
 
   takeDamage(amount) {

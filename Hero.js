@@ -12,7 +12,11 @@ export class Hero {
     this.mana = SETTINGS.HERO_MAX_MANA;
     this.maxMana = SETTINGS.HERO_MAX_MANA;
     this.armor = 0;
-    this.equippedArmor = null;
+    this.equipment = {
+      head: null,
+      chest: null,
+      legs: null,
+    };
 
     // Навигация в матрице
     this.x = 1;
@@ -72,5 +76,6 @@ export class Hero {
     this.equippedWeapons = data.equippedWeapons;
     this.hp = data.hp ?? 100;
     this.maxHp = data.maxHp ?? 100;
+    this.equipment = data.equipment || { head: null, chest: null, legs: null };
   }
 }
