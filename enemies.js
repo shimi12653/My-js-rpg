@@ -81,7 +81,7 @@ export const ENEMIES_DB = {
   dragon: {
     name: "Dragon",
     hp: 500,
-    damage: 100,
+    damage: 50,
     img: "https://i.pinimg.com/736x/98/78/37/987837c4eab3444e144e22ddf6ab0969.jpg",
     isBoss: true,
     tier: 5,

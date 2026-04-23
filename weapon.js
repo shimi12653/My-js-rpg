@@ -111,7 +111,7 @@ export class DualDaggers extends Weapon {
 export class Bow extends Weapon {
   constructor() {
     super("Wooden Bow", 10, 2);
-    this.dodgeChance = 0.25; // Будет вызван при ударе врага
+    this.dodgeChance = 0.3; // Будет вызван при ударе врага
     this.critChance = 0.4;
     this.critMultiplier = 1.5;
   }
@@ -259,7 +259,7 @@ export class WhisperingBoneBow extends Bow {
     this.name = "Whispering Bone Bow";
     this.baseDamage = 11;
     this.handsRequired = 2;
-    this.dodgeChance = 0.3; // лучше шанс уклонения
+    this.dodgeChance = 0.4; // лучше шанс уклонения
     this.critChance = 0.3;
     this.critMultiplier = 1.6;
   }
@@ -271,7 +271,7 @@ export class AshenWraithLongbow extends Bow {
     this.name = "Ashen Wraith Longbow";
     this.baseDamage = 14;
     this.handsRequired = 2;
-    this.dodgeChance = 0.2; // чуть хуже уклонение
+    this.dodgeChance = 0.25; // чуть хуже уклонение
     this.critChance = 0.4; // но высокий шанс крита
     this.critMultiplier = 1.5;
   }

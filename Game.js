@@ -27,11 +27,10 @@ export class Game {
 
     this.inventory = [];
     this.inventory.push(ITEMS.SWORD);
-    this.inventory.push("Grim Oathblade");
-    this.inventory.push("Moonlit Executioner");
     this.inventory.push("Leather Helmet");
     this.inventory.push("Leather Armor");
     this.inventory.push("Leather Pants");
+    this.inventory.push(ITEMS.MANA_POTION);
 
     this.state = GAME_STATE.PLAYING;
     this.isProccessingTurn = false;

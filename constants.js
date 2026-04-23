@@ -7,11 +7,15 @@ export const GAME_STATE = {
 
 export const ITEMS = {
   POTION: "Healing Potion",
+  MEDIUM_POTION: "Medium Healing Potion",
+  LARGE_POTION: "Large Healing Potion",
   BOMB: "Bomb",
   SWORD: "Wooden Sword",
   GOLD: "Gold",
   STAFF: "Fire Staff",
   MANA_POTION: "Mana Potion",
+  MEDIUM_MANA_POTION: "Medium Man Pation",
+  LARGE_MANA_POTION: "Large Man Potion",
   SCYTHE: "Iron Scythe",
   DUAL_DAGGERS: "Dual Daggers",
   BOW: "Wooden Bow",
@@ -21,11 +25,19 @@ export const SETTINGS = {
   // Размеры карты
   MAP_WIDTH: 30,
   MAP_HEIGHT: 30,
-  STARTING_ENEMIES: 4,
-  STARTING_CHESTS: 3,
+  STARTING_ENEMIES: 5,
+  STARTING_CHESTS: 4,
+
   // hero
   HERO_MAX_HP: 100,
   HEAL_AMOUNT: 20,
+  MEDIUM_HEAL_AMOUNT: 50,
+  LARGE_HEAL_AMOUNT: 100,
+
+  MANA_RESTORE_COST: 25,
+  MEDIUM_MANA_POTION_RESTORE_COST: 60,
+  LARGE_MANA_POTION_RESTORE_COST: 120,
+
   CRIT_CHANCE: 0.2,
   WEAPON_DAMAGE: 5,
   MAX_HANDS: 2,
@@ -37,29 +49,45 @@ export const SETTINGS = {
   ENEMY_TURN_DELAY: 1000,
 
   // items (cost)
-  GOLD_DROP: 50, // Имеется ввиду сколько золото с лута приносит
+  GOLD_DROP: 150, // Имеется ввиду сколько золото с лута приносит
   BOMB_COST: 100,
-  STARTING_GOLD: 500,
-  STAFF_COST: 300,
+  STARTING_GOLD: 0,
+
   POTION_COST: 50,
+  MEDIUM_POTION_COST: 120,
+  LARGE_POTION_COST: 250,
+
   POTION_SELL_PRICE: 10,
+  MEDIUM_POTION_SELL_PRICE: 25,
+  LARGE_POTION_SELL_PRICE: 50,
+
   BOMB_SELL_PRICE: 25,
-  STAFF_SELL_PRICE: 100,
-  STAFF_MANA_COST: 15,
-  MANA_RESTORE_COST: 25,
+
   MANA_POTION_COST: 50,
+  MEDIUM_MANA_POTION_COST: 120,
+  LARGE_MANA_POTION_COST: 250,
+
   MANA_POTION_SELL_PRICE: 10,
+  MEDIUM_MANA_POTION_SELL_PRICE: 25,
+  LARGE_MANA_POTION_SELL_PRICE: 50,
+
   SCYTHE_COST: 400,
   SCYTHE_SELL_PRICE: 80,
   DUAL_DAGGERS_COST: 350,
   DUAL_DAGGERS_SELL_PRICE: 70,
   BOW_COST: 300,
   BOW_SELL_PRICE: 60,
+  STAFF_COST: 300,
+  STAFF_SELL_PRICE: 100,
+  STAFF_MANA_COST: 15,
+
   SWORD_SELL_PRICE: 5,
 
   // progression
   LEVEL_UP_HP: 20,
   LEVEL_UP_DAMAGE: 2,
+  LEVEL_UP_MANA: 10,
+  MANA_REGEN_PER_STEP: 1,
   ENEMY_LEVEL_MULTI: 0.2, // 20% + к силе за уровень
 };
 

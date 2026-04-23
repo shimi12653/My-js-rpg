@@ -71,7 +71,7 @@ let countLogMessages = 0;
 let currentShop = []; // Сток магазин (заполняется при помощи generateShopinventory)
 
 // Обаятельная функция логов
-const logMessage = (text, color = "black", fontWeight = "normal") => {
+const logMessage = (text, color = "#F0FFFF", fontWeight = "normal") => {
   if (text === lastLogMessage) {
     countLogMessages++;
 
@@ -291,7 +291,7 @@ const renderShop = (itemsToSell) => {
           game.hero.gold = data.goldLeft;
           game.inventory.length = 0;
           game.inventory.push(...data.inventory);
-          logMessage(`Server: ${data.message}`, "purple");
+          logMessage(data.message, "purple");
           renderInventory();
           updateHeroUI();
           await saveGame();
@@ -308,33 +308,71 @@ const renderShop = (itemsToSell) => {
 
 // Рандомная генерация вещей в магазин
 const generateShopInventory = () => {
-  let newShop = [];
+  let newShop = []; // Стоковый магазин
 
-  // Вещи, которые будут в магазине всегда
-  newShop.push(
-    { name: ITEMS.POTION, price: SETTINGS.POTION_COST },
-    { name: ITEMS.MANA_POTION, price: SETTINGS.MANA_POTION_COST },
-    { name: ITEMS.BOMB, price: SETTINGS.BOMB_COST },
-    { name: "Leather Helmet", price: 100 },
-    { name: "Leather Armor", price: 200 },
-    { name: "Leather Pants", price: 150 },
-  );
+  newShop.push({ name: ITEMS.BOMB, price: SETTINGS.BOMB_COST }); // Добавляем сперва бомбу
 
-  // Список возможных вещей
-  const weaponPool = [
+  const randomRoll = Math.random();
+
+  // Функция для получения рандомного зелья манны и хилки
+  const getPotion = (isMana) => {
+    if (isMana) {
+      if (randomRoll < 0.5) {
+        newShop.push({
+          name: ITEMS.MANA_POTION,
+          price: SETTINGS.MANA_POTION_COST,
+        });
+      } else if (randomRoll < 0.85) {
+        newShop.push({
+          name: ITEMS.MEDIUM_MANA_POTION,
+          price: SETTINGS.MEDIUM_MANA_POTION_COST,
+        });
+      } else {
+        newShop.push({
+          name: ITEMS.LARGE_MANA_POTION,
+          price: SETTINGS.LARGE_MANA_POTION_COST,
+        });
+      }
+    } else {
+      if (randomRoll < 0.5) {
+        newShop.push({ name: ITEMS.POTION, price: SETTINGS.POTION_COST });
+      } else if (randomRoll < 0.85) {
+        newShop.push({
+          name: ITEMS.MEDIUM_POTION,
+          price: SETTINGS.MEDIUM_POTION_COST,
+        });
+      } else {
+        newShop.push({
+          name: ITEMS.LARGE_POTION,
+          price: SETTINGS.LARGE_POTION_COST,
+        });
+      }
+    }
+  };
+
+  getPotion(true); // Получение зелья хилки
+  getPotion(false); // Получение зелья манны
+
+  const equipmentPool = [
     { name: ITEMS.STAFF, price: SETTINGS.STAFF_COST },
     { name: ITEMS.SCYTHE, price: SETTINGS.SCYTHE_COST },
     { name: ITEMS.DUAL_DAGGERS, price: SETTINGS.DUAL_DAGGERS_COST },
-    { name: ITEMS.BOW, price: SETTINGS.BOW_COST },
-  ];
+    { name: ITEMS.BOW, price: SETTINGS.BOMB_COST },
+  ]; // Все редкие виды оружия
 
-  // Массив для выбора оружия из weaponPool
-  for (let i = 0; i < 2; i++) {
-    let randomItem = Math.floor(Math.random() * weaponPool.length);
+  Object.keys(ARMOR_DATA).forEach((armorName) => {
+    const cost = ARMOR_DATA(armorName).cost;
 
-    const weapon = weaponPool.splice(randomItem, 1)[0];
+    if (cost >= 600 && cost < 2000) {
+      equipmentPool.push({ name: armorName, price: cost });
+    }
+  }); // Добавление редких видов брони (в зависимости от цены (от 600 до 2000 - редкие оружия))
 
-    newShop.push(weapon);
+  // Добавление 3 случайных шмоток в магазин
+  for (let i = 0; i < 3; i++) {
+    let randomItem = Math.floor(Math.random() * equipmentPool.length);
+    const equip = equipmentPool.splice(randomItem, 1)[0];
+    newShop.push(equip);
   }
 
   return newShop;
@@ -370,7 +408,7 @@ const renderInventory = () => {
 
             game.hero.gold = data.goldLeft;
 
-            logMessage(`Server: ${data.message}`, "#00de1a");
+            logMessage(data.message, "#00de1a");
 
             renderInventory();
             updateHeroUI();
@@ -405,7 +443,7 @@ const renderInventory = () => {
             };
 
             logMessage(
-              `Server: ${data.message}`,
+              data.message,
               data.itemUsed === ITEMS.BOMB ? "red" : "purple",
             );
 
@@ -467,7 +505,7 @@ const dropLoot = async () => {
     game.inventory.push(...data.inventory);
     game.hero.gold = data.gold;
 
-    logMessage(`Server: ${data.message}`, "purple");
+    logMessage(data.message, "purple");
 
     renderInventory();
     updateHeroUI();
@@ -519,13 +557,10 @@ const handleVictory = async () => {
 
     updateHeroUI();
 
-    logMessage(`Level up! Current level: ${game.level}`, "black");
     logMessage(
-      `Stats up: +${SETTINGS.LEVEL_UP_HP} HP, +${SETTINGS.LEVEL_UP_DAMAGE} DMG`,
+      `Level up (${game.level})! +${SETTINGS.LEVEL_UP_HP} HP, +${SETTINGS.LEVEL_UP_DAMAGE} DMG.`,
       "blue",
-    );
-    logMessage(
-      `Total stats: HP: ${game.hero.maxHp}, Damage: ${game.hero.damage}`,
+      "bold",
     );
 
     await saveGame();
@@ -596,6 +631,7 @@ const resetProgress = async () => {
 
     game.reset();
     lvlIndicator.innerText = game.level;
+    dungeonFloor.innerText = "1"; // Чтобы 100% сбросился уровень данжа
 
     console.log(data.message);
   } catch (e) {
@@ -647,7 +683,7 @@ const initGame = async () => {
   myBtn.disabled = false;
   myBtn.style.color = "";
 
-  logMessage("New game started...", "black");
+  logMessage("New game started...", "#F0FFFF");
 
   if (game.currentEnemy) {
     const hpPercent = (game.currentEnemy.hp / game.currentEnemy.maxHp) * 100;
@@ -984,7 +1020,7 @@ myBtn.addEventListener("click", async () => {
 
     // Проверка пришло ли false
     if (!data.success) {
-      logMessage(`Server: ${data.message}`, "red", "bold");
+      logMessage(data.message, "red", "bold");
       return;
     }
 
@@ -1006,12 +1042,6 @@ myBtn.addEventListener("click", async () => {
       logMessage(`Double Strike. Flurry of blows!`, `#1e90ff`);
     }
 
-    logMessage(
-      `Server: ${data.message} (Damage: ${data.damageDealt}, Enemy HP: ${data.enemyHpLeft}, Mana: ${data.manaLeft})`,
-      "purple",
-      "bold",
-    );
-
     game.currentEnemy.hp = data.enemyHpLeft;
 
     const isCrit = data.isCrit;
@@ -1032,8 +1062,6 @@ myBtn.addEventListener("click", async () => {
 
       game.isProccessingTurn = true;
       toggleControls(true);
-
-      logMessage("Enemy is preparing to attack. Defend yourself!", "grey");
 
       setTimeout(async () => {
         await enemyAttack();
@@ -1232,6 +1260,11 @@ document.addEventListener("keydown", (event) => {
     case "в":
     case "arrowright":
       moveEast.click();
+      break;
+
+    case "e":
+    case "у":
+      myBtn.click();
       break;
   }
 });
