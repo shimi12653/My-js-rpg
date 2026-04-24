@@ -3,15 +3,15 @@
 import express from "express";
 import cors from "cors";
 import fs from "fs";
-import { Game } from "./Game.js"; // 1. Импортируем нашу игру
-import { Enemy } from "./Enemy.js"; // Чтобы не было ошибок с null
+import { Game } from "./public/Game.js"; // 1. Импортируем нашу игру
+import { Enemy } from "./public/Enemy.js"; // Чтобы не было ошибок с null
 import {
   ADVANCED_WEAPONS,
   ARMOR_DATA,
   GAME_STATE,
   ITEMS,
   SETTINGS,
-} from "./constants.js";
+} from "./public/constants.js";
 import {
   Weapon,
   FireStaff,
@@ -29,18 +29,19 @@ import {
   VeinrenderTwins,
   WhisperingBoneBow,
   AshenWraithLongbow,
-} from "./weapon.js";
-import { ENEMIES_DB } from "./enemies.js";
-import { generateMap } from "./maps.js";
+} from "./public/weapon.js";
+import { ENEMIES_DB } from "./public/enemies.js";
+import { generateMap } from "./public/maps.js";
 
 const app = express();
-const PORT = 3000;
 
 // Подключение CORS (возможность серверу брать информацию из другого источника. Источник как сервер, так и пк может быть)
 app.use(cors());
 
 // Учим сервер понимать json
 app.use(express.json());
+
+app.use(express.static("public"));
 
 // Создаем игру один раз при запуске сервера
 const myGame = new Game();
@@ -1428,6 +1429,8 @@ app.get("/load-game", (req, res) => {
   });
 });
 
+const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log(`RPG Сервер запущен на http://localhost:${PORT}`);
+  console.log(`RPG Сервер запущен на порту ${PORT}.`);
 });
