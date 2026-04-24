@@ -3,6 +3,8 @@
 import express from "express";
 import cors from "cors";
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import { Game } from "./public/Game.js"; // 1. Импортируем нашу игру
 import { Enemy } from "./public/Enemy.js"; // Чтобы не было ошибок с null
 import {
@@ -33,6 +35,9 @@ import {
 import { ENEMIES_DB } from "./public/enemies.js";
 import { generateMap } from "./public/maps.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 
 // Подключение CORS (возможность серверу брать информацию из другого источника. Источник как сервер, так и пк может быть)
@@ -41,7 +46,7 @@ app.use(cors());
 // Учим сервер понимать json
 app.use(express.json());
 
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
 // Создаем игру один раз при запуске сервера
 const myGame = new Game();
@@ -194,13 +199,6 @@ if (!myGame.currentEnemy) {
     template.img,
   );
 }
-
-// Главная страница
-app.get("/", (req, res) => {
-  res.send(
-    '<h1>Сервер RPG работает! 🐉</h1><p>Иди на <a href="/game-status">/game-status</a> чтобы увидеть героя.</p>',
-  );
-});
 
 // Сервер отдает состояние игры
 app.get("/game-status", (req, res) => {
