@@ -594,8 +594,7 @@ const enemyAttack = async () => {
       game.currentEnemy.hp = data.enemyHpLeft;
 
       mySpan.innerText = game.currentEnemy.hp;
-      const barWidth =
-        (game.currentEnemy.hp / (game.currentEnemy.maxHp * game.level)) * 100;
+      const barWidth = (game.currentEnemy.hp / game.currentEnemy.maxHp) * 100;
       enemyHpBar.style.width = `${Math.max(0, barWidth)}%`;
     }
 
@@ -638,6 +637,9 @@ const resetProgress = async () => {
     game.reset();
     lvlIndicator.innerText = game.level;
     dungeonFloor.innerText = "1"; // Чтобы 100% сбросился уровень данжа
+
+    keyIndicator.innerText = "Not found";
+    keyIndicator.style.color = "#aaa";
 
     console.log(data.message);
   } catch (e) {
