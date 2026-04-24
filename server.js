@@ -491,8 +491,10 @@ app.get("/move", (req, res) => {
 
     return res.json({
       success: true,
-      message: "You found a chest with gold! +150 coins to your balance.",
+      message: "You found a chest with gold! +300 coins.",
       goldLeft: myGame.hero.gold,
+      isEvent: true,
+      eventColor: "#ffd700",
     });
   } else if (isThatWall === 4) {
     // STAIRS_DOWN interaction: locked by default, unlocked after key-holder death
@@ -505,6 +507,8 @@ app.get("/move", (req, res) => {
         success: true,
         message: "The stairs are locked. Find the Dungeon Key!",
         currentPosition: { x: myGame.hero.x, y: myGame.hero.y },
+        isEvent: true,
+        eventColor: "#DC143C",
       });
     }
 
@@ -515,6 +519,7 @@ app.get("/move", (req, res) => {
       success: true,
       message: `You descend to Floor ${nextFloor}.`,
       currentFloor: nextFloor,
+      stairsUnlocked: myGame.stairsUnlocked,
     });
   } else if (isThatWall === 3) {
     myGame.hero.x = nextX;
@@ -1410,6 +1415,7 @@ app.post("/save-game", (req, res) => {
 app.get("/load-game", (req, res) => {
   res.json({
     state: myGame.state,
+    stairsUnlocked: myGame.stairsUnlocked,
     currentEnemy: myGame.currentEnemy,
     currentFloor: myGame.floor,
     level: myGame.level || 1,

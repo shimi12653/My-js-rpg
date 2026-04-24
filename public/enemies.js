@@ -71,7 +71,7 @@ export const ENEMIES_DB = {
   golem: {
     name: "Stone Golem",
     hp: 300,
-    damage: 15, // Танк, ковырять придется долго
+    damage: 12, // Танк, ковырять придется долго
     img: "https://i.pinimg.com/736x/d3/2f/11/d32f11aa4b6dd89b9843c561ab4673c8.jpg",
     isBoss: false,
     tier: 3,

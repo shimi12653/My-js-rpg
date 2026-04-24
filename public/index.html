@@ -27,8 +27,18 @@
       -->
 
     <div id="game-app" style="display: none">
-      <h1>RPG Game (Hero level: <span id="game-level">1</span>)</h1>
+      <h1>Abyss RPG (Hero level: <span id="game-level">1</span>)</h1>
       <h2>Current floor: <span id="dungeon-floor">1</span></h2>
+      <h2
+        style="
+          margin-top: -10px;
+          margin-bottom: 20px;
+          font-size: 1.2rem;
+          color: #aaa;
+        "
+      >
+        Dungeon Key: <span id="key-indicator"> Not found</span>
+      </h2>
 
       <div class="game-container">
         <div class="hero-panel">
@@ -107,7 +117,7 @@
               ></div>
             </div>
 
-            <button id="attack-btn">ATTACK!</button>
+            <button id="attack-btn">ATTACK! (A)</button>
           </div>
 
           <div id="mini-map"></div>
@@ -116,10 +126,10 @@
 
           <p id="log">Battle started...</p>
 
-          <button id="btn-north">Go up</button>
-          <button id="btn-south">Go down</button>
-          <button id="btn-west">Go left</button>
-          <button id="btn-east">Go right</button>
+          <button id="btn-north">Go up (W)</button>
+          <button id="btn-south">Go down (S)</button>
+          <button id="btn-west">Go left (A)</button>
+          <button id="btn-east">Go right (D)</button>
         </div>
       </div>
 

@@ -48,6 +48,7 @@ const moveEast = document.querySelector("#btn-east");
 const moveWest = document.querySelector("#btn-west");
 const miniMap = document.querySelector("#mini-map");
 const dungeonFloor = document.querySelector("#dungeon-floor");
+const keyIndicator = document.querySelector("#key-indicator");
 const equippedWeaponsList = document.querySelector("#equipped-weapons-list");
 const gameOverScreen = document.querySelector("#game-over-screen");
 const victoryScreen = document.querySelector("#victory-screen");
@@ -291,7 +292,7 @@ const renderShop = (itemsToSell) => {
           game.hero.gold = data.goldLeft;
           game.inventory.length = 0;
           game.inventory.push(...data.inventory);
-          logMessage(data.message, "purple");
+          logMessage(data.message, "#9370db");
           renderInventory();
           updateHeroUI();
           await saveGame();
@@ -444,7 +445,7 @@ const renderInventory = () => {
 
             logMessage(
               data.message,
-              data.itemUsed === ITEMS.BOMB ? "red" : "purple",
+              data.itemUsed === ITEMS.BOMB ? "red" : "#9370db",
             );
 
             if (data.itemUsed === ITEMS.BOMB) {
@@ -505,7 +506,7 @@ const dropLoot = async () => {
     game.inventory.push(...data.inventory);
     game.hero.gold = data.gold;
 
-    logMessage(data.message, "purple");
+    logMessage(data.message, "#9370db");
 
     renderInventory();
     updateHeroUI();
@@ -521,7 +522,7 @@ const handleVictory = async () => {
   mySpan.style.color = "red";
   myBtn.disabled = true;
   myBtn.style.color = "#BBBBBB";
-  logMessage("Enemy is dead. Victory!", "blue", "bold");
+  logMessage("Enemy is dead. Victory!", "#6495ED", "bold");
   enemyHpBar.style.width = "0%";
   toggleCombatUI(false);
 
@@ -547,6 +548,11 @@ const handleVictory = async () => {
 
     logMessage(data.message, "#F0FFFF");
 
+    if (data.stairsUnlocked) {
+      keyIndicator.innerText = "Found";
+      keyIndicator.style.color = "#ffd700";
+    }
+
     game.state = GAME_STATE.VICTORY;
     game.level = newLevel;
     lvlIndicator.innerText = game.level;
@@ -559,7 +565,7 @@ const handleVictory = async () => {
 
     logMessage(
       `Level up (${game.level})! +${SETTINGS.LEVEL_UP_HP} HP, +${SETTINGS.LEVEL_UP_DAMAGE} DMG.`,
-      "blue",
+      "#6495ED",
       "bold",
     );
 
@@ -595,7 +601,7 @@ const enemyAttack = async () => {
 
     if (data.isEnemyDead) {
       // Вывод в лог если враг умер
-      logMessage(data.message, "purple");
+      logMessage(data.message, "#9370db");
       handleVictory();
       return;
     } else {
@@ -743,6 +749,10 @@ moveNorth.addEventListener("click", async () => {
         logMessage(data.message, "#00bfff");
       }
 
+      if (data.isEvent) {
+        logMessage(data.message, data.eventColor, "bold");
+      }
+
       // Рендер карты
       try {
         const mapResponse = await apiGetMap();
@@ -776,6 +786,14 @@ moveNorth.addEventListener("click", async () => {
       if (data.currentFloor) {
         dungeonFloor.innerText = data.currentFloor;
         logMessage(`You are on floor ${data.currentFloor}`, "#4169E1");
+
+        if (data.stairsUnlocked) {
+          keyIndicator.innerText = "Found";
+          keyIndicator.style.color = "#ffd700";
+        } else {
+          keyIndicator.innerText = "Not found";
+          keyIndicator.style.color = "#aaa";
+        }
 
         if (data.currentFloor === 4) {
           shopPanel.style.display = "block";
@@ -814,6 +832,10 @@ moveSouth.addEventListener("click", async () => {
         logMessage(data.message, "#00bfff");
       }
 
+      if (data.isEvent) {
+        logMessage(data.message, data.eventColor, "bold");
+      }
+
       // Рендер карты
       try {
         const mapResponse = await apiGetMap();
@@ -847,6 +869,14 @@ moveSouth.addEventListener("click", async () => {
       if (data.currentFloor) {
         dungeonFloor.innerText = data.currentFloor;
         logMessage(`You are on floor ${data.currentFloor}`, "#4169E1");
+
+        if (data.stairsUnlocked) {
+          keyIndicator.innerText = "Found";
+          keyIndicator.style.color = "#ffd700";
+        } else {
+          keyIndicator.innerText = "Not found";
+          keyIndicator.style.color = "#aaa";
+        }
 
         if (data.currentFloor === 4) {
           shopPanel.style.display = "block";
@@ -885,6 +915,10 @@ moveEast.addEventListener("click", async () => {
         logMessage(data.message, "#00bfff");
       }
 
+      if (data.isEvent) {
+        logMessage(data.message, data.eventColor, "bold");
+      }
+
       // Рендер карты
       try {
         const mapResponse = await apiGetMap();
@@ -918,6 +952,14 @@ moveEast.addEventListener("click", async () => {
       if (data.currentFloor) {
         dungeonFloor.innerText = data.currentFloor;
         logMessage(`You are on floor ${data.currentFloor}`, "#4169E1");
+
+        if (data.stairsUnlocked) {
+          keyIndicator.innerText = "Found";
+          keyIndicator.style.color = "#ffd700";
+        } else {
+          keyIndicator.innerText = "Not found";
+          keyIndicator.style.color = "#aaa";
+        }
 
         if (data.currentFloor === 4) {
           shopPanel.style.display = "block";
@@ -956,6 +998,10 @@ moveWest.addEventListener("click", async () => {
         logMessage(data.message, "#00bfff");
       }
 
+      if (data.isEvent) {
+        logMessage(data.message, data.eventColor, "bold");
+      }
+
       // Рендер карты
       try {
         const mapResponse = await apiGetMap();
@@ -989,6 +1035,14 @@ moveWest.addEventListener("click", async () => {
       if (data.currentFloor) {
         dungeonFloor.innerText = data.currentFloor;
         logMessage(`You are on floor ${data.currentFloor}`, "#4169E1");
+
+        if (data.stairsUnlocked) {
+          keyIndicator.innerText = "Found";
+          keyIndicator.style.color = "#ffd700";
+        } else {
+          keyIndicator.innerText = "Not found";
+          keyIndicator.style.color = "#aaa";
+        }
 
         if (data.currentFloor === 4) {
           shopPanel.style.display = "block";
@@ -1173,6 +1227,14 @@ const loadGame = async () => {
 
     if (data.currentFloor) {
       dungeonFloor.innerText = data.currentFloor;
+    }
+
+    if (data.stairsUnlocked) {
+      keyIndicator.innerText = "Found";
+      keyIndicator.style.color = "#ffd700";
+    } else {
+      keyIndicator.innerText = "Not found";
+      keyIndicator.style.color = "#aaa";
     }
 
     game.level = data.level || 1;

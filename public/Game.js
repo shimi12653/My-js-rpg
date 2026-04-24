@@ -14,7 +14,12 @@ export class Game {
     this.currentEnemy = null;
     this.state = GAME_STATE.PLAYING;
     this.isProccessingTurn = false;
-    this.inventory = [];
+    this.inventory = [
+      ITEMS.SWORD,
+      "Leather Helmet",
+      "Leather Armor",
+      "Leather Pants",
+    ];
     this.map = [];
     this.discoveredMap = [];
 
@@ -30,7 +35,6 @@ export class Game {
     this.inventory.push("Leather Helmet");
     this.inventory.push("Leather Armor");
     this.inventory.push("Leather Pants");
-    this.inventory.push(ITEMS.MANA_POTION);
 
     this.state = GAME_STATE.PLAYING;
     this.isProccessingTurn = false;
