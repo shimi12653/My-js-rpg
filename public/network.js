@@ -1,6 +1,6 @@
 "use strict";
 
-import { Enemy } from "./public/Enemy.js";
+import { Enemy } from "./Enemy.js";
 
 const BASE_URL = window.location.origin;
 
