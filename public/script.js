@@ -313,10 +313,10 @@ const generateShopInventory = () => {
 
   newShop.push({ name: ITEMS.BOMB, price: SETTINGS.BOMB_COST }); // Добавляем сперва бомбу
 
-  const randomRoll = Math.random();
-
   // Функция для получения рандомного зелья манны и хилки
   const getPotion = (isMana) => {
+    const randomRoll = Math.random();
+
     if (isMana) {
       if (randomRoll < 0.5) {
         newShop.push({
@@ -358,11 +358,11 @@ const generateShopInventory = () => {
     { name: ITEMS.STAFF, price: SETTINGS.STAFF_COST },
     { name: ITEMS.SCYTHE, price: SETTINGS.SCYTHE_COST },
     { name: ITEMS.DUAL_DAGGERS, price: SETTINGS.DUAL_DAGGERS_COST },
-    { name: ITEMS.BOW, price: SETTINGS.BOMB_COST },
+    { name: ITEMS.BOW, price: SETTINGS.BOW_COST },
   ]; // Все редкие виды оружия
 
   Object.keys(ARMOR_DATA).forEach((armorName) => {
-    const cost = ARMOR_DATA(armorName).cost;
+    const cost = ARMOR_DATA[armorName].cost;
 
     if (cost >= 600 && cost < 2000) {
       equipmentPool.push({ name: armorName, price: cost });
