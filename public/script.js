@@ -1,8 +1,8 @@
 "use strict";
 
-import { Game } from "./Game.js";
-import { ITEMS, GAME_STATE, ARMOR_DATA } from "./constants.js";
-import { SETTINGS } from "./constants.js";
+import { Game } from "./private/Game.js";
+import { ITEMS, GAME_STATE, ARMOR_DATA } from "./private/constants.js";
+import { SETTINGS } from "./private/constants.js";
 import {
   apiHealHero,
   apiLoadGame,

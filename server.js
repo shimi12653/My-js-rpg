@@ -5,15 +5,15 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { Game } from "./public/Game.js"; // 1. Импортируем нашу игру
-import { Enemy } from "./public/Enemy.js"; // Чтобы не было ошибок с null
+import { Game } from "./private/Game.js"; // 1. Импортируем нашу игру
+import { Enemy } from "./private/Enemy.js"; // Чтобы не было ошибок с null
 import {
   ADVANCED_WEAPONS,
   ARMOR_DATA,
   GAME_STATE,
   ITEMS,
   SETTINGS,
-} from "./public/constants.js";
+} from "./private/constants.js";
 import {
   Weapon,
   FireStaff,
@@ -31,9 +31,9 @@ import {
   VeinrenderTwins,
   WhisperingBoneBow,
   AshenWraithLongbow,
-} from "./public/weapon.js";
-import { ENEMIES_DB } from "./public/enemies.js";
-import { generateMap } from "./public/maps.js";
+} from "./private/weapon.js";
+import { ENEMIES_DB } from "./private/enemies.js";
+import { generateMap } from "./private/maps.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
